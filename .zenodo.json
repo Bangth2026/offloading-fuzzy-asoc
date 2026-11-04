@@ -1,8 +1,8 @@
 {
-  "title": "Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues: code, analysis plans and manuscript build",
+  "title": "Fuzzy rules for cognitive-offloading risk in student–LLM interaction: pre-registered audit of StudyChat and Study 2 on TutorTrace (code and analysis plans)",
   "upload_type": "software",
-  "version": "1.0.0",
-  "description": "Code for the manuscript 'Expert versus Data-Learned Fuzzy Rules for Cognitive-Offloading Risk in Student–LLM Tutoring Dialogues: A Cross-Semester Evaluation' (submitted to Applied Soft Computing). Includes weak-label and feature construction for the StudyChat corpus; an expert five-rule TSK rule base with Łukasiewicz implication constraints (E1–E6); outcome-checked rules (E7–E9); a count-based TSK rule base with learned consequents (CF-TSK) evaluated across semesters (E10), with input selection nested in the training semester (E11) and with an LSTM encoder (E12); the in-archive benchmark, ablation, permutation and complementarity analyses; the analysis plans PREREG_E7_E9/E10/E11/E12.md committed before each run (see git-history.bundle); a frozen CF-TSK model trained on Fall 2024; and a renderer that builds the manuscript from the statistics file. StudyChat data are not included (access-gated, CC BY 4.0).",
+  "version": "1.1.0",
+  "description": "Version 1.1.0. Code, analysis plans (PREREG_*.md, each committed before its run; full history in the GitHub repository) and results. Study 1 (StudyChat): expert and learned TSK rule bases, Łukasiewicz implication constraints, cross-semester tests (E1–E12) and a pre-registered audit (R1–R1c) showing that the weak assisted-minus-unaided label is dominated by assessment-group structure; within assessment groups no behavioural input predicts it, so the behavioural conclusions of version 1.0.0 are not supported. Study 2 (TutorTrace): a pre-registered sign-checked TSK classifier for dependent AI help requests, trained on one classroom deployment and tested on others. No third-party data are redistributed.",
   "creators": [
     {
       "name": "Truong, Hai Bang",
@@ -15,9 +15,9 @@
   "keywords": [
     "cognitive offloading",
     "Takagi-Sugeno-Kang fuzzy rules",
-    "learned consequents",
-    "neuro-fuzzy learning",
-    "cross-cohort validation",
+    "pre-registration",
+    "weak supervision",
+    "assessment confounding",
     "learning analytics",
     "large language models"
   ],
