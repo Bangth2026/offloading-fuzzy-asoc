@@ -6,6 +6,16 @@ Code accompanying the manuscript *Expert versus Data-Learned Fuzzy Rules for Cog
 
 The study compares an expert five-rule Takagi–Sugeno–Kang (TSK) rule base, used as a standalone score and as a Łukasiewicz implication constraint on sequence encoders, with CF-TSK, an eight-rule grid over dialogue-act volumes whose consequents are learned on training data. CF-TSK is tested across the two StudyChat semesters under analysis plans committed before each run (`PREREG_*.md`; the commit order is in `git-history.bundle` or the repository history). `results/frozen_cf_tsk_f24.json` holds the Fall 2024 model for scoring new cohorts without refitting.
 
+## Status (4 November 2026): audit result and pause
+
+A pre-submission review (analysis plans `PREREG_R1.md`, `PREREG_R1b.md`, `PREREG_R1c.md`, each committed before its run; scripts `run_revision.py`, `run_revision_b.py`, `run_within.py`, `run_constraint_ci.py`) found that the weak label is dominated by assessment-group structure:
+
+- a model that knows only the assessment group reaches AUC 0.699 (Fall 2024 → Spring 2025), 0.780 (reverse) and 0.730 in pooled CV, above every behavioural model, including CF-TSK (0.663 / 0.642);
+- within assessment groups, no behavioural input (shares or volumes) is associated with the gap (all 95% intervals contain 0), so the sign reversal of the expert rule FR1 is a between-group effect;
+- held-out predictions carry at most weak within-group signal (ρ = 0.02–0.14).
+
+The behavioural conclusions of version 1.0.0 (E10–E12) are therefore not supported, and the manuscript has been withdrawn from submission. `PREREG_S2_protocol.md` describes the redesigned study (within-cell continuous outcome, sign-checked TSK regression, confirmation on a new cohort). Results files: `results/revision_stats.json`, `results/revision_b_stats.json`, `results/within_stats.json`, `results/constraint_ci.json`.
+
 ## Layout
 
 | Path | Purpose |
