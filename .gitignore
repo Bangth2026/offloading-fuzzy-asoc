@@ -27,6 +27,9 @@ results/*
 !results/constraint_ci.json
 !results/constraint_ci_log.txt
 !results/revision_b_stats.json
+!results/revision_b_log.txt
+!results/within_stats.json
+!results/within_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png
