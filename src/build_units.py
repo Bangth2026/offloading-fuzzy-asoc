@@ -96,7 +96,10 @@ def unit_rates(feats):
     return dict(v=float(np.mean([f["verbatim"] for f in w])) if w else 0.0,
                 u=float(np.mean([f["surf"] for f in feats])) if feats else 0.0,
                 p=sum(f["broad"] == PROVIDE for f in feats) / n,
-                e=sum(f["broad"] == "verification" for f in feats) / n)
+                e=sum(f["broad"] == "verification" for f in feats) / n,
+                w=sum(f["broad"] == WRITING for f in feats) / n,          # E7-E9 (PREREG_E7_E9.md)
+                c=sum(f["broad"] == CONCEPTUAL for f in feats) / n,
+                broad=[f["broad"] for f in feats])
 
 
 def assignment_of(rec, pattern):
