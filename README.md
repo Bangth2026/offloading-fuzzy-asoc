@@ -10,6 +10,13 @@ The study compares an expert five-rule Takagi–Sugeno–Kang (TSK) rule base, u
 |---|---|
 | `src/build_units.py` | Algorithms 1–2: weak labels and turn features from the raw StudyChat release → `units.pkl` |
 | `src/fuzzy_rules.py` | Membership functions, rule base FR1–FR5, TSK inference, explanations, rule losses |
+| `src/input_diagnostics.py` | E6: direction of each rule input against the label |
+| `src/oc_tsk.py`, `src/run_followup.py` | E7–E9: outcome-checked rules, interval implication loss |
+| `src/run_transfer.py`, `src/make_fig_transfer.py` | E10: CF-TSK cross-semester confirmation, Figure 7 |
+| `src/run_nested.py` | E11: input selection inside the training semester; writes the frozen model |
+| `src/run_lstm_transfer.py` | E12: LSTM encoder with and without the CF-TSK constraint |
+| `src/reproduce_benchmark.py`, `src/seq_seeds.py` | Table 3, permutation test, ablation, complementarity, seed checks |
+| `PREREG_*.md` | Analysis plans, each committed before its run |
 | `src/run_fuzzy_experiments.py` | Experiments E1–E5 (Section 6.3) → `results/paper_stats_fuzzy.json`, Figures 5–6 |
 | `manuscript/fill_manuscript.py` | Renders manuscript and cover letter from the statistics file |
 | `manuscript/manuscript_template.txt` | Manuscript source with statistics slots and pre-specified interpretation rules |
