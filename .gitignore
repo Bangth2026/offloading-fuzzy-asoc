@@ -2,6 +2,10 @@ __pycache__/
 *.pkl
 results/*
 !results/.gitkeep
+!results/paper_stats_fuzzy.json
+!results/fig4_fuzzy.png
+!results/fig5_fuzzy.png
+!results/run_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png

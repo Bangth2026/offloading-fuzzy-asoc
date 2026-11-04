@@ -36,6 +36,13 @@ def test_end_to_end_fill(tmp_path=None):
     tmp = tempfile.mkdtemp()
     subprocess.run([sys.executable, os.path.join(ROOT, "src", "run_fuzzy_experiments.py"), "--demo",
                     "--out", os.path.join(tmp, "stats.json"), "--figdir", tmp], check=True)
+    sys.path.insert(0, os.path.join(ROOT, "src"))
+    import pickle
+    from run_fuzzy_experiments import synthetic_units
+    pickle.dump(synthetic_units(), open(os.path.join(tmp, "units.pkl"), "wb"))
+    subprocess.run([sys.executable, os.path.join(ROOT, "src", "input_diagnostics.py"),
+                    "--units", os.path.join(tmp, "units.pkl"), "--stats", os.path.join(tmp, "stats.json")],
+                   check=True, stdout=subprocess.DEVNULL)
     out = subprocess.run([sys.executable, os.path.join(ROOT, "manuscript", "fill_manuscript.py"),
                           "--stats", os.path.join(tmp, "stats.json"), "--repo-url", "https://example.org/demo",
                           "--doi", "10.0000/demo", "--allow-fewer-seeds", "--outdir", os.path.join(tmp, "build")], check=True)

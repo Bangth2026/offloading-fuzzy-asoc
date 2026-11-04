@@ -30,13 +30,20 @@ pytest -q                                         # synthetic smoke tests, no da
 python src/build_units.py --data /path/to/StudyChat --config config/studychat.json --out results/units.pkl
 #    stops unless the sample matches the paper: 175 students, 464 units, 116 high-risk units
 
-# 2. experiments E1–E5 (10 paired seeds; several hours on CPU)
+# 2. experiments E1–E5 (10 paired seeds; about 90 minutes on 2 CPU cores)
 python src/run_fuzzy_experiments.py --units results/units.pkl --out results/paper_stats_fuzzy.json --figdir results
+#    direction check of the rule inputs (E6, Section 7.3), merged into the same file
+python src/input_diagnostics.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \
        --repo-url https://github.com/<owner>/<repo> --doi 10.5281/zenodo.<id>
+#    both flags are optional; without them the availability statement says the
+#    archive is supplied with the submission and the DOI follows before publication
 ```
+
+The statistics file and figures behind the submitted manuscript are included in `results/`
+(`paper_stats_fuzzy.json`, `fig4_fuzzy.png`, `fig5_fuzzy.png`, `run_log.txt`).
 
 ## How numbers reach the manuscript
 

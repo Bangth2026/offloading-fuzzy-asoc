@@ -91,6 +91,18 @@ def build_context(st, repo_url, doi):
     if S["to_n"]:
         S["to_fr1_num"] = E5["transformer_only_mean_firing"]["FR1"]
         S["to_fr1"] = f3(S["to_fr1_num"])
+    S["fr1_lower_flagged"] = E5["mean_firing_flagged"]["FR1"] < E5["mean_firing_rest"]["FR1"]
+    # standalone rule score "close to chance": AUC below 0.55 (descriptive, not a test)
+    S["f_near_chance"] = E3["fuzzy"]["auc"] < 0.55
+    E6 = st["E6_inputs"]
+    for k, tag in [("v", "v"), ("u", "u"), ("p", "p"), ("e", "e"), ("verbatim_all_turns", "va")]:
+        S[f"e6_{tag}_rho"] = f3(E6[k]["spearman_y"])
+        S[f"e6_{tag}_lo"], S[f"e6_{tag}_hi"] = f3(E6[k]["ci95"][0]), f3(E6[k]["ci95"][1])
+        S[f"e6_{tag}_p"] = fp(E6[k]["spearman_p"])
+        S[f"e6_{tag}_auc"] = f3(E6[k]["auc"])
+        S[f"e6_{tag}_mean"] = f"{E6[k]['mean']:.2f}"
+        S[f"e6_{tag}_neg"] = E6[k]["ci95"][1] < 0
+        S[f"e6_{tag}_null"] = E6[k]["ci95"][0] < 0 < E6[k]["ci95"][1]
     S["today"] = datetime.date.today().strftime("%d %B %Y")
     return S
 
@@ -108,8 +120,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stats", required=True)
     ap.add_argument("--figdir", default=None, help="folder with fig4_fuzzy.png and fig5_fuzzy.png")
-    ap.add_argument("--repo-url", required=True)
-    ap.add_argument("--doi", required=True, help="Zenodo DOI, e.g. 10.5281/zenodo.1234567")
+    ap.add_argument("--repo-url", default="")
+    ap.add_argument("--doi", default="", help="Zenodo DOI, e.g. 10.5281/zenodo.1234567")
     ap.add_argument("--outdir", default=os.path.join(HERE, "build"))
     ap.add_argument("--allow-fewer-seeds", action="store_true", help="tests only")
     a = ap.parse_args()
