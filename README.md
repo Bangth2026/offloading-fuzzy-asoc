@@ -1,5 +1,7 @@
 # Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23940474.svg)](https://doi.org/10.5281/zenodo.23940474)
+
 Code accompanying the manuscript *Expert versus Data-Learned Fuzzy Rules for Cognitive-Offloading Risk in Student–LLM Tutoring Dialogues: A Cross-Semester Evaluation* (H. B. Truong, submitted to *Applied Soft Computing*).
 
 The study compares an expert five-rule Takagi–Sugeno–Kang (TSK) rule base, used as a standalone score and as a Łukasiewicz implication constraint on sequence encoders, with CF-TSK, an eight-rule grid over dialogue-act volumes whose consequents are learned on training data. CF-TSK is tested across the two StudyChat semesters under analysis plans committed before each run (`PREREG_*.md`; the commit order is in `git-history.bundle` or the repository history). `results/frozen_cf_tsk_f24.json` holds the Fall 2024 model for scoring new cohorts without refitting.
