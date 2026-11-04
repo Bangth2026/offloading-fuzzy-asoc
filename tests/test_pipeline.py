@@ -39,10 +39,19 @@ def test_end_to_end_fill(tmp_path=None):
     sys.path.insert(0, os.path.join(ROOT, "src"))
     import pickle
     from run_fuzzy_experiments import synthetic_units
-    pickle.dump(synthetic_units(), open(os.path.join(tmp, "units.pkl"), "wb"))
+    import numpy as np
+    from run_followup import BROAD
+    U = synthetic_units(); rng = np.random.default_rng(1)
+    for u in U:
+        u["broad"] = list(rng.choice(BROAD, len(u["da"]))); n = len(u["broad"])
+        u["w"] = u["broad"].count(BROAD[1]) / n; u["c"] = u["broad"].count(BROAD[0]) / n
+    pickle.dump(U, open(os.path.join(tmp, "units.pkl"), "wb"))
     subprocess.run([sys.executable, os.path.join(ROOT, "src", "input_diagnostics.py"),
                     "--units", os.path.join(tmp, "units.pkl"), "--stats", os.path.join(tmp, "stats.json")],
                    check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, os.path.join(ROOT, "src", "run_followup.py"), "--units", os.path.join(tmp, "units.pkl"),
+                    "--stats", os.path.join(tmp, "stats.json"), "--out", os.path.join(tmp, "fu.json"),
+                    "--seeds", "2", "--epochs", "1"], check=True, stdout=subprocess.DEVNULL)
     out = subprocess.run([sys.executable, os.path.join(ROOT, "manuscript", "fill_manuscript.py"),
                           "--stats", os.path.join(tmp, "stats.json"), "--repo-url", "https://example.org/demo",
                           "--doi", "10.0000/demo", "--allow-fewer-seeds", "--outdir", os.path.join(tmp, "build")], check=True)

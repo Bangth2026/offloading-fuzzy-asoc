@@ -34,6 +34,8 @@ python src/build_units.py --data /path/to/StudyChat --config config/studychat.js
 python src/run_fuzzy_experiments.py --units results/units.pkl --out results/paper_stats_fuzzy.json --figdir results
 #    direction check of the rule inputs (E6, Section 7.3), merged into the same file
 python src/input_diagnostics.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
+#    follow-up E7-E9 (Section 7.8; plan in PREREG_E7_E9.md, committed before the run; ~25 min)
+python src/run_followup.py --units results/units.pkl --stats results/paper_stats_fuzzy.json --out results/followup_stats.json
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \

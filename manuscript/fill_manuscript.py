@@ -103,6 +103,17 @@ def build_context(st, repo_url, doi):
         S[f"e6_{tag}_mean"] = f"{E6[k]['mean']:.2f}"
         S[f"e6_{tag}_neg"] = E6[k]["ci95"][1] < 0
         S[f"e6_{tag}_null"] = E6[k]["ci95"][0] < 0 < E6[k]["ci95"][1]
+    F = st["E7_E9_followup"]; P = F["primary"]; Mn = F["means"]
+    for k in ("none", "oc_imp", "fus_tf_oc", "lr", "fus_lr_oc", "oc_rule", "ex_rule"):
+        S[f"fu_{k}_m"], S[f"fu_{k}_sd"] = f3(Mn[k]["mean"]), f3(Mn[k]["sd"])
+    for k in P:
+        S[f"fu_{k}"] = {"d": f3(P[k]["mean_diff"]), "npos": P[k]["n_pos"], "p": fp(P[k]["wilcoxon_p_holm"]),
+                        "sig": P[k]["wilcoxon_p_holm"] < ALPHA, "pos": P[k]["mean_diff"] > 0}
+    S["fu_any_gain"] = any(v["wilcoxon_p_holm"] < ALPHA and v["mean_diff"] > 0 for v in P.values())
+    m, (lo, hi) = F["oc_vs_expert_rule_auc_seed0"]
+    S["fu_oe_d"], S["fu_oe_lo"], S["fu_oe_hi"] = f3(m), f3(lo), f3(hi)
+    import numpy as _np
+    S["fu_z"] = {j: f"{_np.mean(v):.2f}" for j, v in F["learned_z_seed0"].items()}
     S["today"] = datetime.date.today().strftime("%d %B %Y")
     return S
 

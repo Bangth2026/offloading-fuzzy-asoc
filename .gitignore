@@ -6,6 +6,8 @@ results/*
 !results/fig4_fuzzy.png
 !results/fig5_fuzzy.png
 !results/run_log.txt
+!results/followup_stats.json
+!results/followup_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png
