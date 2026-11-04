@@ -39,7 +39,10 @@ def weak_labels(scores: pd.DataFrame, max_points: dict, cols: dict) -> pd.DataFr
             llm = float(np.dot(vals, w) / np.sum(w))
             no_llm = float(s[cols[exam]])
             y = float(np.clip((llm - no_llm) / llm, 0, 1)) if llm > 0 else 0.0
-            rows.append(dict(userId=str(s[cols["userId"]]), semester=sem, group=name, y=y))
+            prior = {"g1": None, "g2": "e1", "g3": "e2"}[name]          # preceding unaided exam (R1-C)
+            pe = float(s[cols[prior]]) if prior and not pd.isna(s[cols[prior]]) else float("nan")
+            rows.append(dict(userId=str(s[cols["userId"]]), semester=sem, group=name, y=y,
+                             llm=llm, nollm=no_llm, prior_exam=pe, n_assign=len(assigns)))
     return pd.DataFrame(rows)
 
 
@@ -145,6 +148,8 @@ def main():
         num = np.array([[f["lat"], f["verbatim"], f["self_att"], f["surf"]] for f in feats], dtype=float)
         units.append(dict(group_key=f"{lab.userId}_{lab.semester}", group=lab.group,
                           da=np.array([f["da"] for f in feats]), num=num, y=float(lab.y),
+                          llm=float(lab.llm), nollm=float(lab.nollm), prior_exam=float(lab.prior_exam),
+                          n_assign=int(lab.n_assign),
                           **unit_rates(feats)))
     lat_max = max(u["num"][:, 0].max() for u in units) or 1.0
     for u in units:

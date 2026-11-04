@@ -22,6 +22,10 @@ results/*
 !results/lstm_transfer_stats.json
 !results/lstm_transfer_log.txt
 !results/seq_seeds_log.txt
+!results/revision_stats.json
+!results/revision_log.txt
+!results/constraint_ci.json
+!results/constraint_ci_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png
