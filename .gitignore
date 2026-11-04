@@ -30,8 +30,11 @@ results/*
 !results/revision_b_log.txt
 !results/within_stats.json
 !results/within_log.txt
+!results/audit_cells.json
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png
 node_modules/
 data/
+
+manuscript_A/build/

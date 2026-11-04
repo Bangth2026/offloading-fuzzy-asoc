@@ -16,7 +16,7 @@ A pre-submission review (analysis plans `PREREG_R1.md`, `PREREG_R1b.md`, `PREREG
 - within assessment groups, no behavioural input (shares or volumes) is associated with the gap (all 95% intervals contain 0), so the sign reversal of the expert rule FR1 is a between-group effect;
 - held-out predictions carry at most weak within-group signal (ρ = 0.02–0.14).
 
-The behavioural conclusions of version 1.0.0 (E10–E12) are therefore not supported, and the manuscript has been withdrawn from submission. `PREREG_S2_protocol.md` describes the redesigned study (within-cell continuous outcome, sign-checked TSK regression, confirmation on a new cohort). Results files: `results/revision_stats.json`, `results/revision_b_stats.json`, `results/within_stats.json`, `results/constraint_ci.json`.
+The behavioural conclusions of version 1.0.0 (E10–E12) are therefore not supported, and the manuscript has been withdrawn from submission. Study 2 (TutorTrace, `study2/`) and Study 3 (RECIPE4U, `study3/`) apply the same pre-registered protocol to request-level targets; manuscript A (`manuscript_A/`, rendered by `fill_A.py`) reports all three studies. `PREREG_S2_protocol.md` describes the redesigned study (within-cell continuous outcome, sign-checked TSK regression, confirmation on a new cohort). Results files: `results/revision_stats.json`, `results/revision_b_stats.json`, `results/within_stats.json`, `results/constraint_ci.json`.
 
 ## Layout
 

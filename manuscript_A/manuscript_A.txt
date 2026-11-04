@@ -1,0 +1,244 @@
+!TITLE Check the Premises Before Imposing the Rules: A Pre-Registered Audit of Fuzzy Rule Models on Three Student–AI Interaction Datasets
+!CENTER Hai Bang Truong
+!CENTER Faculty of Engineering and Computer Science, Saigon International University, Ho Chi Minh City, Vietnam
+!CENTER truonghaibang@siu.edu.vn · ORCID 0000-0001-5094-3128
+
+## Highlights
+- Fuzzy rule models of student–AI logs can encode assessment structure, not behaviour.
+- A three-check audit: within-cell antecedent signs, structure-only baselines, transfer.
+- On StudyChat, a group-only model outranks every behavioural model of offloading risk.
+- On two request-level datasets, sign-checked TSK rules transfer across cohorts.
+- In EFL writing, eight readable rules match all-feature models and beat structure.
+- In programming, the same rule base trails logistic regression by about 0.08 AUC.
+
+## Abstract
+Fuzzy rule bases suit models of how students use large language model (LLM) assistants: the evidence is graded and instructors want readable reasons. Such models can look valid while encoding the structure of the learning environment rather than behaviour. We propose a three-check audit: antecedent signs within structural cells, a structure-only baseline, and cross-cohort transfer under a plan committed before the run. Study 1 applies the audit to StudyChat (464 units, 175 students), where cognitive-offloading risk is proxied by the gap between AI-assisted assignment and unaided exam scores. An expert Takagi–Sugeno–Kang (TSK) rule base ranks units at chance (AUC {{S.f_auc}}); a count-based TSK base with learned consequents transfers between semesters (AUC {{S.cf_p}} and {{S.cf_r}}), but a model that knows only the assessment group does better ({{S.grp_p.e}} and {{S.grp_r.e}}), and within groups no behavioural input is associated with the label (all |ρ| ≤ {{S.dir_max}}). Studies 2 and 3 move the target to the request itself, whether a student asks the AI for the answer (TutorTrace, programming) or for text to be produced for them (RECIPE4U, EFL writing), and apply a sign-checked TSK classifier with eight rules. Across programming deployments it transfers (AUC {{S.ta.sc_tsk.e}}–{{S.tc.sc_tsk.e}}) but neither clearly beats session structure nor matches logistic regression on all features ({{S.ta.lr_all_behaviour.e}}). Across writing courses it reaches {{S.r1.sc_tsk.e}} and {{S.r2.sc_tsk.e}}, exceeds a structure-only model by {{S.r1.H2.e}} and is non-inferior to all-feature regression; its strongest rule says that students who have already asked for production keep asking. All analyses were specified in writing before they were run.
+
+**Keywords:** Takagi–Sugeno–Kang fuzzy rules; Interpretability; Shortcut learning; Pre-registration; Learning analytics; Cognitive offloading; Large language models
+
+# 1. Introduction
+Students now complete much of their coursework with LLM assistants beside them. Some use the assistant to repair a misconception; others hand over the reasoning and still submit correct work, a pattern the cognitive-science literature calls cognitive offloading [1]. Field and laboratory studies suggest the second pattern can reduce learning even while assisted performance improves [12,13]. Instructors therefore want an early, readable signal of which interactions look like delegation, and soft computing offers an obvious instrument. The behavioural evidence is graded rather than binary, the boundary between productive and delegating use is imprecise, and a fuzzy rule base turns such evidence into a score whose reasons are written in the instructor's own terms [3,4].
+
+The difficulty is that a readable model is not thereby a valid one. A rule base encodes premises: that unchecked acceptance of generated code signals offloading, or that a student who has written little code before asking wants the answer. When the training data carry structure that correlates with the label (which assessment a record belongs to, how far into a session a query falls), a fuzzy model can fit that structure and still produce rules that sound behavioural. The general phenomenon is familiar from machine learning as shortcut learning [20] and, in its evaluation form, as leakage [19]. What is less discussed is that interpretability makes the shortcut harder to see, not easier, because the rule text supplies a plausible behavioural story.
+
+We met this problem directly. An earlier version of this work, built on the public StudyChat corpus [2], reported that a count-based TSK rule base with learned consequents transferred between two semesters and was non-inferior to the strongest aggregate baseline. A pre-submission audit, run under a written plan, showed that a model knowing only which assessment group a record belongs to beats every behavioural model on the same task, and that within assessment groups none of the behavioural inputs is related to the label. This paper reports that audit, generalises it into a procedure, and applies the procedure to two further public datasets, TutorTrace [15] in programming and RECIPE4U [16] in EFL writing, where the target is defined by the behaviour itself rather than by a downstream outcome.
+
+The paper makes four contributions.
+
+- A three-check audit for fuzzy rule models of interaction data: (1) the sign of each antecedent is tested within structural cells, not only in pooled data; (2) every rule model is compared with a structure-only baseline; (3) transfer is tested across cohorts under an analysis plan committed before the run. Each check is cheap, and each catches a failure that ordinary cross-validation misses.
+- Study 1, a full audit of fuzzy rule models of offloading risk on StudyChat. It shows that the widely used "assisted minus unaided" proxy is dominated by assessment structure, that the apparent sign reversal of an expert rule is a between-group effect, and that a learned rule base which passed a pre-registered cross-semester test still carries little within-group signal.
+- Study 2, a pre-registered test on TutorTrace of a sign-checked TSK classifier for answer-seeking requests. The rule base transfers across deployments and to a new task and yields a rule table with a clear pedagogical reading, but it does not clearly exceed a session-structure baseline and it costs about 0.08 AUC relative to an unrestricted linear model. We report this cost as a result, not a footnote.
+- Study 3, the same pre-registered protocol on RECIPE4U, testing transfer across three writing courses. Here the rule base passes all three hypotheses: it transfers in both directions, clearly exceeds a structure-only model, and is non-inferior to regression on all features.
+
+Section 2 reviews related work. Section 3 states the audit and the rule models. Sections 4–6 report the three studies. Section 7 discusses what the audit implies for fuzzy modelling in learning analytics, and Section 8 lists the limitations.
+
+# 2. Related work
+## 2.1 Fuzzy systems in learner modelling
+Fuzzy logic has a long record in adaptive and intelligent tutoring, where knowledge levels, misconceptions and engagement are graded quantities. Chrysafiadi and Virvou [9] used fuzzy sets and rules to adapt instruction in an e-learning environment for programming, and much later work follows the same pattern: expert-defined linguistic terms over learner indicators, with rules that map them to an adaptation decision. Rule-constrained neural learners are a newer branch. Injecting logical rules into network training through soft constraints [23] or differentiable fuzzy operators [18] lets a model keep the rules' readability while learning from data. In learner modelling, recent work injects educational knowledge into knowledge-tracing networks with the same aim [24]. These approaches share an assumption that our audit questions: that the premises of the rules are correct for the population at hand.
+
+## 2.2 Interpretability and accuracy of fuzzy rule bases
+The trade-off between interpretability and accuracy is a central theme of fuzzy modelling. Gacto et al. [8] review interpretability measures for linguistic rule bases, separating complexity (number of rules, antecedents) from semantic quality (distinguishable, meaningful terms). Data-driven rule generation ranges from the one-pass Wang–Mendel method [6] to ANFIS, which tunes memberships and consequents by gradient descent [5,22], and to rule induction such as FURIA [7]. Outside fuzzy logic, generalised additive models with pairwise interactions [10], implemented as Explainable Boosting Machines [11], offer a strong interpretable baseline. These methods differ in how they trade readability for fit. None of them, on its own, guards against a rule base fitting a structural confound, which is the gap our audit addresses.
+
+## 2.3 Student–LLM interaction data and offloading
+Bastani et al. [12] show experimentally that unrestricted generative-AI access in high-school mathematics improves assisted practice but harms later unaided performance, and Fan et al. [13] report a related loss of self-regulation. Large logs of real student–LLM dialogue have only recently become public. StudyChat [2] contains student–ChatGPT dialogues from two semesters of a university AI course, annotated with dialogue acts and linked to assignment and exam scores. Several analyses have since used it to relate dialogue to outcomes. Hasan and Jabe [14], in a pre-registered out-of-sample study, find that dialogue-act features do not add predictive value for exam scores beyond prior performance. Our Study 1 reaches a compatible conclusion by a different route: it locates the source of the apparent signal in assessment structure. TutorTrace [15] instead logs fine-grained IDE activity around AI-tutor queries in an introductory programming course, with queries labelled as guided or dependent help-seeking. It allows the target to be defined at the moment of asking, which is the property Study 2 exploits. RECIPE4U [16] offers comparable logs for EFL writing, with every student utterance annotated for intent; it supports the same request-level design, which Study 3 uses.
+
+## 2.4 Shortcuts, leakage and pre-registration
+Geirhos et al. [20] describe shortcut learning as models solving a benchmark through cues that do not transfer to the intended task. Kapoor and Narayanan [19] catalogue leakage in machine-learning-based science, including evaluation designs that let structure in the test data inflate performance. Pre-registration [21] separates confirmatory from exploratory analysis by fixing the plan before the data are examined. The three checks of Section 3 combine these ideas for the specific case of fuzzy rule models, where the rules themselves can disguise a shortcut as an explanation.
+
+# 3. The audit and the rule models
+## 3.1 Three checks
+Figure 1 summarises the audit. It applies to any rule model whose antecedents are computed from interaction data and whose label may be correlated with structure in that data.
+
+!FIG figs/fig1_audit.png | Figure 1. The three-check audit, with the outcome of each check in the three studies.
+
+**Check 1: antecedent signs within structural cells.** For each input, compute its association with the label within each structural cell (assessment group, session position or course) and pool the within-cell estimates; report an interval clustered by student. A rule whose sign holds in pooled data but not within cells encodes the structure, not the behaviour.
+
+**Check 2: a structure-only baseline.** Fit the same evaluation protocol with a model that sees only the structural variables. A behavioural rule model is informative only to the extent that it improves on this baseline, and the improvement is the quantity to report.
+
+**Check 3: transfer under a committed plan.** Train on one cohort and score another once, with hypotheses, decision rules and margins committed to a public repository before the run. Every analysis from E7 onward follows this rule; Table 1 lists each analysis with the commit that fixed its plan and the commit that recorded its result.
+
+!TABLE
+Analysis | Question | Plan committed (UTC, 4 Nov 2026) | Result committed
+E1–E6 | Expert rules as score and as constraint; direction check | Decision rules in the code before the run | 06:07 (202374a)
+E7–E9 | Outcome-checked rules with learned consequents | 06:11 (41a1252) | 06:37 (1c050ea)
+E10 | Count-based TSK (CF-TSK), cross-semester | 06:42 (9c24f9e) | 06:51 (b03064c)
+E11 | E10 with input selection inside the training semester | 07:09 (46be22b) | 07:11 (d026b38)
+E12 | LSTM encoder with the CF-TSK constraint | 07:22 (474c5b6) | 07:27 (93b9378)
+R1, R1b, R1c | Audit: label structure, within-group signal, comparators | 07:42, 08:05, 08:08 (d1bb6e1, 569b1f4, 7a4d533) | 08:16 (0cab512)
+Study 2 | Sign-checked TSK on TutorTrace | 08:27 (be03ee2) | 08:44 (078a270)
+Study 3 | Same protocol on RECIPE4U | 09:15 (068f0d9) | 09:27 (e4f7282)
+!END
+!CAP Table 1. Register of analyses. Commit hashes refer to the public repository (Data availability); E7–R1c were designed after earlier results on the same corpus and are reported as such.
+
+## 3.2 TSK rule bases used in the three studies
+All rule bases are zero-order TSK systems [4]. Each input x has two linguistic terms with ramp memberships, HIGH(x) = clip((x − a)/(b − a), 0, 1) and LOW(x) = 1 − HIGH(x), where a and b are the 25th and 75th percentiles of the training data. With three inputs the full grid gives eight rules, from "all three LOW" to "all three HIGH", combined by the product t-norm. The output is
+
+!EQ s = (Σ_j w_j z_j + w_0 z_0) / (Σ_j w_j + w_0),
+
+with w_j the firing degree of rule j, z_j ∈ [0, 1] its consequent and a background term w_0 = 0.05, z_0 = 0.5 that keeps s defined when no rule fires.
+
+The **expert rule base** of Study 1 (FR1–FR5) reads four unit-level shares: v, the share of writing requests not followed by an editing or verification turn; u, the share of turns in runs of three or more assignment-specific questions; p, the share of provide-context turns; and e, the share of verification turns. Its consequents are fixed by the author (FR1: v HIGH → risk 1.0; FR4: v LOW and e HIGH → risk 0.0; and so on).
+
+The **learned rule bases** keep the grid but fit the consequents. Because s is linear in z once the firing degrees are known, z is obtained in closed form by bounded least squares against the binary label,
+
+!EQ z = argmin_{0 ≤ z ≤ 1} ‖A z + b − y‖² + α ‖z − π‖²,
+
+with A_ij = w_ij / (Σ_k w_ik + w_0), b_i = w_0 z_0 / (Σ_k w_ik + w_0), π the training base rate and α = 1 fixed in advance. Each z_j is then close to the proportion of positive cases among units that strongly match rule j, pulled toward the base rate when few units match it. In Study 1 the inputs are log counts of dialogue acts (CF-TSK). In Studies 2 and 3 they are three pre-request behavioural metrics chosen by a sign check (SC-TSK, Section 5.1). When a training quartile pair coincides (for example when most values are zero), b is set to a + 10⁻³, which turns that membership into a step at a; we report where this happens.
+
+For rule injection into neural encoders we read rule j as "if the antecedent holds, risk is about z_j" and penalise violations of the Łukasiewicz bounds w_j z_j ≤ r ≤ 1 − w_j(1 − z_j) with a hinge loss. The bounds are vacuous when a rule does not fire and pull the prediction toward z_j from whichever side it violates when it fires fully.
+
+# 4. Study 1: offloading risk on StudyChat
+## 4.1 Data and label
+StudyChat [2] holds student–ChatGPT dialogues from two offerings of a university AI course (Fall 2024, Spring 2025), each turn labelled by GPT-4.1 with one of eight broad and 31 specific dialogue acts. Assignments 1–2 precede Exam 1, assignments 3–4 precede Exam 2, and assignments 5–7 precede the final exam; exams are taken without AI access. Following the dataset's assessment structure we form one unit per student and assessment group and define the weak label as the relative gap between the assisted assignment average and the unaided exam,
+
+!EQ y = clip((llm_g − no_llm_g) / llm_g, 0, 1),
+
+marking the top quartile as high risk. This gives {{S.n_units}} units from {{S.n_students}} students. The construction is the natural one for an offloading proxy, and it is the one used in the earlier version of this work.
+
+## 4.2 What the pre-audit analyses showed
+Table 2 condenses analyses E1–E12. Read without the audit, they tell a coherent story. The expert rule base ranks units at chance ({{S.f_auc}}; {{S.c_auc}} for a crisp version), and as a Łukasiewicz constraint on a Transformer it leaves AUC unchanged (Δ = {{S.imp_d}}, Holm-adjusted p = {{S.imp_p}}). Its main antecedent appears to have the wrong sign: v is inversely associated with y (ρ = {{S.v_rho}}, 95% CI {{S.v_lo}} to {{S.v_hi}}). Learning the consequents on the same shares does not help ({{S.oc_auc}}). Switching to log counts with learned consequents does: trained on Fall 2024 and scored once on Spring 2025, CF-TSK reaches {{S.cf_p}} (98.75% CI {{S.cfci_p.lo}} to {{S.cfci_p.hi}}) against {{S.lr8_p}} for a logistic regression on all eight counts, and {{S.cf_r}} in the reverse direction. The result survives moving the input selection inside the training semester ({{S.nest_p}} and {{S.nest_r}}) and its transfer decisions hold when all seven confirmatory tests on Spring 2025 are corrected jointly. In pooled cross-validation an LSTM is the most accurate encoder ({{S.lstm_m}} ± {{S.lstm_sd}} over ten seeds, against {{S.lr_m}} ± {{S.lr_sd}} for the regression and {{S.tf_m}} ± {{S.tf_sd}} for a Transformer), but across semesters it does not beat the rule base ({{S.lstmx_p}} and {{S.lstmx_r}}). Rule constraints change Transformer and LSTM AUC by less than 0.01 in every case.
+
+!TABLE
+Model | Inputs | Consequents | Fall → Spring AUC | Spring → Fall AUC
+Expert rules FR1–FR5 | Shares v, u, p, e | Author-set | {{S.ex_p}} | {{S.ex_r}}
+EC-TSK | Log counts W, C, P | Author-set directions | {{S.ec_p.e}} | {{S.ec_r.e}}
+CF-TSK | Log counts W, C, P | Learned | {{S.cf_p}} | {{S.cf_r}}
+CF-TSK, nested selection (E11) | Three counts chosen in training semester | Learned | {{S.nest_p}} | {{S.nest_r}}
+Logistic regression | Eight broad counts | — | {{S.lr8_p}} | {{S.lr8_r}}
+Logistic regression | Same three log counts as CF-TSK | — | {{S.lr3_p}} | {{S.lr3_r}}
+LSTM (10 seeds, E12) | Turn sequence | — | {{S.lstmx_p}} | {{S.lstmx_r}}
+**Assessment group only** | **One-hot group** | — | **{{S.grp_p.e}}** | **{{S.grp_r.e}}**
+!END
+!CAP Table 2. Study 1, cross-semester AUC with the pooled weak label (top quartile of y, threshold from the training semester). EC-TSK uses consequents z = (1[W HIGH] + 1[C LOW] + 1[P HIGH])/3 taken from the expert rules' directions. Intervals are in Figure 2b and the statistics file.
+
+The 2 × 2 comparison asked for by the inputs-versus-consequents question is also in Table 2. On shares, neither author-set nor learned consequents work. On counts, author-set directions rank units below chance ({{S.ec_p.e}}, CI {{S.ec_p.lo}} to {{S.ec_p.hi}}), and learning the consequents raises AUC by {{S.cfec_p.e}} (CI {{S.cfec_p.lo}} to {{S.cfec_p.hi}}). Taken at face value, the story is that both the inputs and the knowledge in the rules were wrong, and that a learned volume-based rule base fixes both.
+
+## 4.3 The audit
+**Check 2 fails first.** The last row of Table 2 is the structure-only baseline: a logistic regression that knows only which assessment group a unit belongs to. It reaches {{S.grp_p.e}} (CI {{S.grp_p.lo}} to {{S.grp_p.hi}}) from Fall to Spring and {{S.grp_r.e}} (CI {{S.grp_r.lo}} to {{S.grp_r.hi}}) from Spring to Fall, and {{S.grp_cv}} in pooled cross-validation, above every behavioural model in the study. Figure 2a shows why. With the Fall 2024 threshold, the high-risk share is {{S.prev_f24_g1}}, {{S.prev_f24_g2}} and {{S.prev_f24_g3}} in groups 1–3 of Fall 2024 and {{S.prev_s25_g1}}, {{S.prev_s25_g2}} and {{S.prev_s25_g3}} in Spring 2025. In Fall 2024 group 2, {{S.zero_f24_g2}}% of units have y = 0 because the exam score exceeds the assignment average. The label mostly records how hard each exam was relative to its assignments.
+
+!FIG figs/fig2_studychat_audit.png | Figure 2. Study 1 audit. (a) Share of units labelled high-risk by assessment group and semester (Fall 2024 threshold). (b) Cross-semester AUC with 95% student-cluster bootstrap intervals; the group-only model outranks every behavioural model. (c) Within-cell Spearman correlation between each rule input and y, with 95% intervals; cells are semester × assessment group.
+
+**Check 1 explains the expert rule.** Within semester × group cells, none of the seven rule inputs, shares or log counts, is associated with y (Figure 2c). The largest absolute within-cell correlation is {{S.dir_max}}; for v it is {{S.dir.v.r}} (CI {{S.dir.v.lo}} to {{S.dir.v.hi}}), and for log writing-request volume {{S.dir.log_W.r}} (CI {{S.dir.log_W.lo}} to {{S.dir.log_W.hi}}). The "wrong sign" of FR1 in pooled data is therefore a between-group effect: group 1, with many writing requests and few unchecked acceptances relative to later groups, also has the hardest exam relative to its assignments. The expert rule was not refuted; it was never tested.
+
+**Check 3, applied within groups.** For each cross-semester model we correlated its held-out scores with y within groups. The estimates lie between {{S.win_range[0]}} and {{S.win_range[1]}}. Only one interval excludes zero (the seed-averaged Transformer from Fall to Spring, ρ = {{S.win.primary.transformer_seedavg.r}}, CI {{S.win.primary.transformer_seedavg.lo}} to {{S.win.primary.transformer_seedavg.hi}}); for CF-TSK the values are {{S.win.primary.cf_tsk_e10.r}} (CI {{S.win.primary.cf_tsk_e10.lo}} to {{S.win.primary.cf_tsk_e10.hi}}) and {{S.win.reverse.cf_tsk_e10.r}} (CI {{S.win.reverse.cf_tsk_e10.lo}} to {{S.win.reverse.cf_tsk_e10.hi}}). The pre-registered transfer of E10 was real, but most of what transferred was the group structure.
+
+One part of the audit itself had to be corrected. Our first attempt to remove group effects thresholded the label within each semester × group cell. In Fall 2024 group 2 the cell's 75th percentile is zero, so that rule marks every unit of the cell positive in both semesters and reintroduces the group effect. We report the attempt in the repository and base the within-group conclusions only on rank correlations with the continuous y, which are unaffected by ties.
+
+## 4.4 Other checks requested in review
+Four further analyses, all specified before they were run, bound the reading of Study 1. Interpretable comparators on the same inputs (logistic regression with and without interactions, shallow trees, Wang–Mendel, ANFIS-style TSK and an EBM) rank units within a few hundredths of CF-TSK (Fall → Spring: LR3 {{S.cmp.primary.lr3}}, ANFIS {{S.cmp.primary.anfis}}, Wang–Mendel {{S.cmp.primary.wang_mendel}}, EBM {{S.cmp.primary.ebm}}), so no model family escapes the structure problem. Adjusting for the preceding unaided exam, CF-TSK keeps a positive coefficient from Fall to Spring ({{S.prior_p.b}}, CI {{S.prior_p.lo}} to {{S.prior_p.hi}}) but not in the reverse direction ({{S.prior_r.b}}, CI {{S.prior_r.lo}} to {{S.prior_r.hi}}). Replacing up to 40% of dialogue-act labels at random leaves the frozen rule base's AUC between {{S.noise_lo}} and {{S.noise_hi}}, which is what one expects from a model that depends mostly on coarse volume. The effect of rule constraints on neural encoders is negligible: the cluster-bootstrap interval of the AUC difference lies within ±0.01 for the LSTM in both directions and for the Transformer from Fall to Spring ({{S.con.primary.transformer.d}}, CI {{S.con.primary.transformer.lo}} to {{S.con.primary.transformer.hi}}).
+
+# 5. Study 2: answer-seeking requests on TutorTrace
+## 5.1 Data, target and model
+TutorTrace [15] records millisecond IDE telemetry from introductory Python sessions with an integrated AI tutor across four classroom deployments. Each AI query is labelled guided (asks for a hint or explanation) or dependent (asks for the answer or the code); labels come from GPT-4o and were validated against two human raters for deployments 1 and 2 (κ = .709 and .690). We use the released query-level metrics, which summarise activity since the previous query (code edits, characters inserted and deleted, terminal runs and errors, failed tests, idle and reading times), and treat a dependent query as the act of offloading at the moment of asking. Chat text and code are not used. Deployment 1 (D1) contributes {{S.tt_counts['1'].queries}} labelled queries from {{S.tt_counts['1'].students}} students, D2 {{S.tt_counts['2'].queries}} from {{S.tt_counts['2'].students}}, and D3, a different task with unvalidated labels, {{S.tt_counts['3'].queries}} from {{S.tt_counts['3'].students}}.
+
+The plan, committed before any feature–label relation was examined (Table 1), applies all three checks. Structure is represented by the query's position in the session, its timing from session start and the test progress at the moment of asking. SC-TSK ranks the behavioural metrics by |AUC − 0.5| on the training deployment and keeps a metric only if its sign agrees in two halves of the training students (Check 1 applied to the training data); the top three form the grid of Section 3.2. Three hypotheses were tested on D1 → D2 at Bonferroni α = 0.0167: transfer (H1, lower bound of AUC above 0.5), behaviour beyond structure (H2, lower bound of the AUC gain of structure + SC-TSK over structure alone above 0), and non-inferiority to a logistic regression on all behavioural features (H3, margin 0.05).
+
+## 5.2 Results
+The sign check selected pre-query net code growth, characters inserted and pre-query duration on D1; all three are lower before dependent queries. Table 3 and Figure 3 give the results.
+
+!TABLE
+Model | D1 → D2 | D2 → D1 | D1+D2 → D3 (new task)
+SC-TSK (8 rules, proposed) | {{S.ta.sc_tsk.e}} [{{S.ta.sc_tsk.lo}}, {{S.ta.sc_tsk.hi}}] | {{S.tb.sc_tsk.e}} [{{S.tb.sc_tsk.lo}}, {{S.tb.sc_tsk.hi}}] | {{S.tc.sc_tsk.e}} [{{S.tc.sc_tsk.lo}}, {{S.tc.sc_tsk.hi}}]
+Structure only | {{S.ta.structure_only.e}} [{{S.ta.structure_only.lo}}, {{S.ta.structure_only.hi}}] | {{S.tb.structure_only.e}} [{{S.tb.structure_only.lo}}, {{S.tb.structure_only.hi}}] | {{S.tc.structure_only.e}} [{{S.tc.structure_only.lo}}, {{S.tc.structure_only.hi}}]
+Structure + SC-TSK | {{S.ta.structure_plus_sc_tsk.e}} | {{S.tb.structure_plus_sc_tsk.e}} | {{S.tc.structure_plus_sc_tsk.e}}
+LR, all behavioural features | {{S.ta.lr_all_behaviour.e}} [{{S.ta.lr_all_behaviour.lo}}, {{S.ta.lr_all_behaviour.hi}}] | {{S.tb.lr_all_behaviour.e}} | {{S.tc.lr_all_behaviour.e}}
+LR, same three inputs | {{S.ta.lr3.e}} | {{S.tb.lr3.e}} | {{S.tc.lr3.e}}
+Wang–Mendel | {{S.ta.wang_mendel.e}} | {{S.tb.wang_mendel.e}} | {{S.tc.wang_mendel.e}}
+ANFIS-style TSK | {{S.ta.anfis.e}} | {{S.tb.anfis.e}} | {{S.tc.anfis.e}}
+Decision tree, depth 2 | {{S.ta.tree_d2.e}} | {{S.tb.tree_d2.e}} | {{S.tc.tree_d2.e}}
+EBM | {{S.ta.ebm.e}} | {{S.tb.ebm.e}} | {{S.tc.ebm.e}}
+!END
+!CAP Table 3. Study 2, AUC for dependent versus guided queries on the held-out deployment, with 95% student-cluster bootstrap intervals where shown. All models use only information available at the moment of the query.
+
+!FIG figs/fig3_tutortrace.png | Figure 3. Study 2. (a) AUC on held-out deployments with 95% intervals. (b) SC-TSK consequents learned on D1, read as the probability that a query is dependent for sessions fully matching each rule; cells supported by few queries (for example HIGH growth, HIGH insertions, LOW duration) are pulled toward the base rate only weakly and should not be read alone.
+
+H1 holds: SC-TSK reaches {{S.ta.H1.e}} on D2 (98.33% CI {{S.ta.H1.lo}} to {{S.ta.H1.hi}}), {{S.tb.sc_tsk.e}} in the reverse direction and {{S.tc.sc_tsk.e}} on the new task of D3, where labels were not validated. H2 does not hold: adding SC-TSK to the structure model raises AUC by {{S.ta.H2.e}} (98.33% CI {{S.ta.H2.lo}} to {{S.ta.H2.hi}}) on D2 and by {{S.tb.H2.e}} on D1, and not at all on D3, where structure alone reaches {{S.tc.structure_only.e}}. H3 does not hold either: SC-TSK trails the logistic regression on all behavioural features by {{S.ta.H3.e}} (98.33% CI {{S.ta.H3.lo}} to {{S.ta.H3.hi}}). On the same three inputs, the fuzzy and non-fuzzy interpretable models are within a few hundredths of each other, so the cost comes from using three inputs, not from the fuzzy form.
+
+The rule table (Figure 3b) is the part an instructor would use. With low code growth since the last query, three of the four cells lie above the base rate of {{S.ta.base}} ({{S.ta.z[0]}}, {{S.ta.z[1]}} and {{S.ta.z[3]}}); with high code growth and a long pre-query interval the probability of a dependent request drops to {{S.ta.z[5]}} and {{S.ta.z[7]}}. Read plainly: students who ask for the answer have usually not been writing code. Unlike the expert premise of Study 1, this premise survived the within-sample sign check before it was used, and it transferred.
+
+A secondary analysis, specified in the plan, adds the length of the query text to the candidates. It is selected first and lifts SC-TSK to {{S.tq.sc_tsk.e}}, passing all three hypotheses. We do not count this as behavioural evidence, because the label is assigned from the same query text.
+
+# 6. Study 3: production requests in EFL writing (RECIPE4U)
+## 6.1 Data, target and protocol
+RECIPE4U [16] contains student–ChatGPT exchanges from three EFL writing courses at one university, collected over a semester as students revised essays with ChatGPT. Every student utterance carries an intent label. We obtained the data through the authors' consent form, use utterance and essay texts only through their lengths, and redistribute nothing. Among request utterances we set y = 1 for production requests, which ask ChatGPT to generate, revise or translate the student's text, and y = 0 for guidance requests, which ask for information, evaluation, language-use advice or confirmation. A production request hands the writing step to the model in the same way that a dependent query in TutorTrace hands over the coding step. The Scientific Writing course (SW) contributes {{S.rc_fmt.SW.n}} requests from {{S.rc_fmt.SW.s}} students, Academic Writing (AW) {{S.rc_fmt.AW.n}} from {{S.rc_fmt.AW.s}}, and Intermediate Reading and Writing (IRW) {{S.rc_fmt.IRW.n}} from {{S.rc_fmt.IRW.s}}.
+
+The plan (Table 1) copies Study 2 with features computed from earlier exchanges of the same session: number of earlier turns, share of earlier requests that were production requests, earlier essay edits, mean earlier satisfaction rating, mean lengths of earlier student utterances and ChatGPT replies, and essay length and growth before the request. Structure is course, week, session and position in the session. Transfer is tested across courses: train on SW and test on AW and IRW together (primary), and the reverse.
+
+## 6.2 Results
+The sign check excluded {{S.r1.excluded[0]}} and {{S.r1.excluded[1]}}, whose direction differed between the two halves of the SW students, and selected the share of earlier production requests, the mean length of earlier ChatGPT replies and the number of earlier turns. The first of these is zero for most requests, so its LOW/HIGH split acts as a step between "no earlier production request" and "at least one". Table 4 and Figure 4 give the results.
+
+!TABLE
+Model | SW → AW + IRW | AW + IRW → SW
+SC-TSK (8 rules, proposed) | {{S.r1.sc_tsk.e}} [{{S.r1.sc_tsk.lo}}, {{S.r1.sc_tsk.hi}}] | {{S.r2.sc_tsk.e}} [{{S.r2.sc_tsk.lo}}, {{S.r2.sc_tsk.hi}}]
+Structure only | {{S.r1.structure_only.e}} [{{S.r1.structure_only.lo}}, {{S.r1.structure_only.hi}}] | {{S.r2.structure_only.e}} [{{S.r2.structure_only.lo}}, {{S.r2.structure_only.hi}}]
+Structure + SC-TSK | {{S.r1.structure_plus_sc_tsk.e}} | {{S.r2.structure_plus_sc_tsk.e}}
+LR, all behavioural features | {{S.r1.lr_all_behaviour.e}} [{{S.r1.lr_all_behaviour.lo}}, {{S.r1.lr_all_behaviour.hi}}] | {{S.r2.lr_all_behaviour.e}} [{{S.r2.lr_all_behaviour.lo}}, {{S.r2.lr_all_behaviour.hi}}]
+LR, same three inputs | {{S.r1.lr3.e}} | {{S.r2.lr3.e}}
+Wang–Mendel | {{S.r1.wang_mendel.e}} | {{S.r2.wang_mendel.e}}
+ANFIS-style TSK | {{S.r1.anfis.e}} | {{S.r2.anfis.e}}
+Decision tree, depth 2 | {{S.r1.tree_d2.e}} | {{S.r2.tree_d2.e}}
+EBM | {{S.r1.ebm.e}} | {{S.r2.ebm.e}}
+!END
+!CAP Table 4. Study 3, AUC for production versus guidance requests on the held-out courses, with 95% student-cluster bootstrap intervals where shown.
+
+!FIG figs/fig4_recipe4u.png | Figure 4. Study 3. (a) AUC on held-out courses with 95% intervals. (b) SC-TSK consequents learned on SW, read as the probability that a request asks ChatGPT to produce text.
+
+All three hypotheses hold in the primary direction. SC-TSK reaches {{S.r1.H1.e}} (98.33% CI {{S.r1.H1.lo}} to {{S.r1.H1.hi}}); the structure-only model is at chance ({{S.r1.structure_only.e}}), and adding SC-TSK to it raises AUC by {{S.r1.H2.e}} (CI {{S.r1.H2.lo}} to {{S.r1.H2.hi}}); and SC-TSK differs from the logistic regression on all behavioural features by {{S.r1.H3.e}} (CI {{S.r1.H3.lo}} to {{S.r1.H3.hi}}), inside the non-inferiority margin. The reverse direction, which was secondary, gives the same decisions ({{S.r2.sc_tsk.e}}; gain over structure {{S.r2.H2.e}}, CI {{S.r2.H2.lo}} to {{S.r2.H2.hi}}), and there the all-feature regression transfers worse than the rule base ({{S.r2.lr_all_behaviour.e}}). Among interpretable alternatives, ANFIS-style TSK is close in both directions, and Wang–Mendel and the linear model on the same inputs lose ground in the reverse direction.
+
+The rule table is short to state. A request that follows at least one earlier production request in the same session is a production request with probability {{S.r1.z[4]}} when earlier replies were short and the session young, and between {{S.r1.z[6]}} and {{S.r1.z[7]}} otherwise; without an earlier production request the probability stays between {{S.r1.z[2]}} and {{S.r1.z[0]}}, against a base rate of {{S.r1.base}}. In plain terms, students who have started to delegate their writing tend to continue, and the first such request is the moment an instructor-facing tool could intervene. The rule is behavioural persistence rather than a deep construct, and Section 7 returns to what that does and does not show.
+
+# 7. Discussion
+The three studies answer the question in the title differently, and the difference is instructive. In StudyChat the target was a downstream outcome tied to assessment structure, and every rule model, expert or learned, fuzzy or not, found the structure. The pre-registered cross-semester test of E10 did not protect against this, because the structure itself transfers: each semester has the same three assessment groups with similar relative difficulty. In TutorTrace and RECIPE4U the target was defined at the moment of the behaviour, and the same sign-checked rule base transferred in all five splits. How much it added depended on the setting. In short programming sessions the position and timing of a query already carried much of the signal, and three behavioural inputs could not match a regression on all of them. In writing sessions spread over a semester, structure carried nothing, and three inputs selected by the sign check were as good as all of them. The audit did not make the fuzzy model better in any case. It made clear what each model had learned, and that is what decides whether its rules should be shown to an instructor.
+
+Three lessons follow for fuzzy modelling of interaction data. First, an antecedent's sign must be checked within the cells of whatever structure the data carry, and on the training data, before the rule is trusted or imposed as a constraint. In Study 1 that check would have shown at once that FR1 had no within-group support; in Study 3 the same check removed two candidate inputs whose direction was unstable across students. Second, a structure-only baseline belongs in every results table. It is trivial to fit, it changed the conclusion of Study 1, and it is what makes the positive result of Study 3 credible. Third, interpretability has a measurable price that should be reported. In Study 2, eight readable rules cost about 0.08 AUC against an unrestricted linear model; in Study 3 they cost nothing. Whether a price is worth paying is a decision for the instructor, but only if it is visible.
+
+Several alternative explanations bound the substantive reading. In StudyChat, students with few logged interactions may have used other AI tools, so low logged volume need not mean low use. Prior ability correlates with both exam scores and interaction style; adjusting for the preceding exam leaves CF-TSK's coefficient positive in one direction only. In TutorTrace, the guided/dependent label is model-generated with moderate agreement with humans (κ ≈ 0.7), and a dependent request may be a reasonable choice for a student who is stuck rather than a sign of offloading. In RECIPE4U, the strongest rule is persistence: a student's earlier production requests predict the next one. That is useful for timing an intervention but says nothing about why the student delegates, and a production request may still be followed by careful revision. None of these is resolved by the audit; each is a reason to read the rule tables as descriptions of behaviour in these cohorts rather than as diagnoses of individual students.
+
+# 8. Limitations
+- Study 1 uses one course at one university. The structural confound we found is specific to its assessment design, though the check that found it is not.
+- Study 1's later analyses (E7–R1c) were designed after earlier results on the same corpus. Each was specified before it was run, but together they form a sequence of decisions informed by the data, and we report them as such.
+- Study 2 uses short in-class sessions (10–15 minutes) at one institution. Its labels are model-generated; those of D3 were not validated. Study 3 uses three writing courses at one university and the dataset's own intent annotations, whose grouping into production and guidance requests is ours and was fixed in the plan.
+- TutorTrace's licence is stated as CC BY 4.0 in its metadata but marked as pending confirmation in its datasheet; we use only released numeric metrics and labels, redistribute nothing, and have asked the maintainers to confirm.
+- None of the studies measures learning. Study 1's outcome is a noisy proxy; the targets of Studies 2 and 3 are help-seeking acts. Linking interaction patterns to learning requires data with unaided outcomes and comparison conditions; we have requested such data from the authors of a randomised classroom study [17] and list it as the next test.
+
+# 9. Conclusion
+Fuzzy rule bases make models of student–AI interaction readable, and readability makes them persuasive. We showed that this persuasiveness can hide a model that has learned the structure of the course rather than the behaviour of its students, and proposed a three-check audit that exposes it: antecedent signs within structural cells, a structure-only baseline, and transfer under a committed plan. On StudyChat the audit overturned our own earlier result. On TutorTrace it confirmed a transferable rule base for answer-seeking queries and made its cost in accuracy explicit. On RECIPE4U it confirmed an eight-rule base for production requests that transferred across writing courses, clearly exceeded structure and lost nothing to an all-feature model. We suggest that fuzzy models of learning data report all three checks as routinely as they report accuracy.
+
+# Declarations
+**CRediT authorship contribution statement.** Hai Bang Truong: Conceptualization, Methodology, Software, Formal analysis, Investigation, Data curation, Validation, Visualization, Writing – original draft, Writing – review & editing.
+
+**Declaration of competing interest.** The author declares no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+**Funding.** This research received no specific grant from funding agencies in the public, commercial or not-for-profit sectors.
+
+**Data availability.** StudyChat [2] is available at huggingface.co/datasets/wmcnicho/StudyChat after accepting its terms (CC BY 4.0). TutorTrace [15] is available at github.com/divadbaroon/TutorTrace_dataset_and_benchmark (branch uist). RECIPE4U [16] is available for research use through its authors' consent form. No data are redistributed. Code, analysis plans and all statistics files are openly available at {{S.repo_url}} and archived on Zenodo (https://doi.org/{{S.doi}}); the commit history records the order of every plan and result in Table 1.
+
+**Ethics.** The study is a secondary analysis of three de-identified datasets collected by their authors under institutional review with informed consent; RECIPE4U was obtained under its authors' research-use terms. Saigon International University does not require separate approval for secondary analysis of anonymised data.
+
+**Declaration of generative AI use.** During the preparation of this work the author used Claude (Anthropic) to assist with code, analysis scripts and language editing. All analyses were specified, checked and interpreted by the author, who takes full responsibility for the content.
+
+# References
+!REF [1] E.F. Risko, S.J. Gilbert, Cognitive offloading, Trends Cogn. Sci. 20 (2016) 676–688. https://doi.org/10.1016/j.tics.2016.07.002
+!REF [2] H. McNichols, F. Ikram, A. Lan, The StudyChat dataset: Analyzing student dialogues with ChatGPT in an artificial intelligence course, in: Proc. 16th Int. Learning Analytics and Knowledge Conf. (LAK26), ACM, 2026, pp. 53–63. https://doi.org/10.1145/3785022.3785029
+!REF [3] L.A. Zadeh, Fuzzy sets, Inf. Control 8 (1965) 338–353. https://doi.org/10.1016/S0019-9958(65)90241-X
+!REF [4] T. Takagi, M. Sugeno, Fuzzy identification of systems and its applications to modeling and control, IEEE Trans. Syst. Man Cybern. SMC-15 (1985) 116–132. https://doi.org/10.1109/TSMC.1985.6313399
+!REF [5] J.-S.R. Jang, ANFIS: Adaptive-network-based fuzzy inference system, IEEE Trans. Syst. Man Cybern. 23 (1993) 665–685. https://doi.org/10.1109/21.256541
+!REF [6] L.-X. Wang, J.M. Mendel, Generating fuzzy rules by learning from examples, IEEE Trans. Syst. Man Cybern. 22 (1992) 1414–1427. https://doi.org/10.1109/21.199466
+!REF [7] J. Hühn, E. Hüllermeier, FURIA: An algorithm for unordered fuzzy rule induction, Data Min. Knowl. Discov. 19 (2009) 293–319. https://doi.org/10.1007/s10618-009-0131-8
+!REF [8] M.J. Gacto, R. Alcalá, F. Herrera, Interpretability of linguistic fuzzy rule-based systems: An overview of interpretability measures, Inf. Sci. 181 (2011) 4340–4360. https://doi.org/10.1016/j.ins.2011.02.021
+!REF [9] K. Chrysafiadi, M. Virvou, Fuzzy logic for adaptive instruction in an e-learning environment for computer programming, IEEE Trans. Fuzzy Syst. 23 (2015) 164–177. https://doi.org/10.1109/TFUZZ.2014.2310242
+!REF [10] Y. Lou, R. Caruana, J. Gehrke, G. Hooker, Accurate intelligible models with pairwise interactions, in: Proc. 19th ACM SIGKDD Int. Conf. Knowledge Discovery and Data Mining, 2013, pp. 623–631. https://doi.org/10.1145/2487575.2487579
+!REF [11] H. Nori, S. Jenkins, P. Koch, R. Caruana, InterpretML: A unified framework for machine learning interpretability, arXiv:1909.09223 (2019).
+!REF [12] H. Bastani, O. Bastani, A. Sungu, H. Ge, Ö. Kabakcı, R. Mariman, Generative AI without guardrails can harm learning: Evidence from high school mathematics, Proc. Natl. Acad. Sci. U.S.A. 122 (26) (2025) e2422633122. https://doi.org/10.1073/pnas.2422633122
+!REF [13] Y. Fan, L. Tang, H. Le, K. Shen, S. Tan, Y. Zhao, Y. Shen, X. Li, D. Gašević, Beware of metacognitive laziness: Effects of generative artificial intelligence on learning motivation, processes, and performance, Br. J. Educ. Technol. 56 (2025) 489–530. https://doi.org/10.1111/bjet.13544
+!REF [14] M.S. Hasan, M.M.N. Jabe, Do student–ChatGPT dialogues incrementally predict learning outcomes? Out-of-sample evidence from two datasets, preprint (2026). https://www.alphaxiv.org/abs/2610.ai-chats-vs-grades.pdf
+!REF [15] D. Barron, X. Tang, R. Dwisantika, M. Kim, D.H. Smith IV, J. Cui, Y. Chen, TutorTrace: A dataset and taxonomy for classifying learner behavioral states during AI-assisted programming education, in: Proc. ACM Symp. User Interface Software and Technology (UIST '26), 2026. arXiv:2608.26184.
+!REF [16] J. Han, H. Yoo, J. Myung, M. Kim, T.Y. Lee, S.-Y. Ahn, A. Oh, RECIPE4U: Student-ChatGPT interaction dataset in EFL writing education, in: Proc. 2024 Joint Int. Conf. Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024), ELRA and ICCL, 2024, pp. 13666–13676.
+!REF [17] E. Chen, et al., Chat-based support alone may not be enough: Comparing conversational and embedded LLM feedback for mathematical proof learning, arXiv:2602.18807 (2026).
+!REF [18] E. van Krieken, E. Acar, F. van Harmelen, Analyzing differentiable fuzzy logic operators, Artif. Intell. 302 (2022) 103602. https://doi.org/10.1016/j.artint.2021.103602
+!REF [19] S. Kapoor, A. Narayanan, Leakage and the reproducibility crisis in machine-learning-based science, Patterns 4 (2023) 100804. https://doi.org/10.1016/j.patter.2023.100804
+!REF [20] R. Geirhos, J.-H. Jacobsen, C. Michaelis, R. Zemel, W. Brendel, M. Bethge, F.A. Wichmann, Shortcut learning in deep neural networks, Nat. Mach. Intell. 2 (2020) 665–673. https://doi.org/10.1038/s42256-020-00257-z
+!REF [21] B.A. Nosek, C.R. Ebersole, A.C. DeHaven, D.T. Mellor, The preregistration revolution, Proc. Natl. Acad. Sci. U.S.A. 115 (2018) 2600–2606. https://doi.org/10.1073/pnas.1708274114
+!REF [22] J.-S.R. Jang, C.-T. Sun, E. Mizutani, Neuro-Fuzzy and Soft Computing, Prentice Hall, Upper Saddle River, NJ, 1997.
+!REF [23] Z. Hu, X. Ma, Z. Liu, E. Hovy, E. Xing, Harnessing deep neural networks with logic rules, in: Proc. 54th Annual Meeting of the Association for Computational Linguistics, 2016, pp. 2410–2420. https://doi.org/10.18653/v1/P16-1228
+!REF [24] D. Hooshyar, Y. Yang, G. Šír, T. Kärkkäinen, R. Hämäläinen, M. Cukurova, R. Azevedo, Neural-symbolic knowledge tracing: Injecting educational knowledge into deep learning for responsible learner modelling, arXiv:2604.08263 (2026).
