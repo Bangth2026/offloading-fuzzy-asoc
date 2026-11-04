@@ -133,6 +133,35 @@ def build_context(st, repo_url, doi):
         for k, v in dec.items():
             S[f"t{tag}_{k.split('_')[0]}"] = v
     S["t_prev"] = f"{T['primary']['test_prevalence']:.2f}"
+    B = st["E0_benchmark"]
+    for k, v in B["table3"].items():
+        S[f"b_{k}"], S[f"b_{k}_r"] = f3(v["auc"]), f3(v["r"])
+    S["b_nspec"] = B["n_specific_labels"]
+    S["b_lrs"] = {k: f3(v) for k, v in B["lr_seeds"].items()}
+    P_ = B["permutation"]
+    S["b_perm"] = {"obs": f3(P_["observed"]), "mean": f3(P_["null_mean"]), "max": f3(P_["null_max"]),
+                   "p": f"{P_['p']:.3f}", "n": P_["n"], "pmin": P_["p"] <= 1.0 / (P_["n"] + 1) + 1e-12}
+    S["b_abl"] = {k: {"auc": f3(v["auc"]), "drop": f3(v["drop"])} for k, v in B["ablation"].items()}
+    Cm = B["complementarity"]
+    S["b_cm"] = {k: (f3(v) if isinstance(v, float) else v) for k, v in Cm.items() if k != "recall_at_budget"}
+    S["b_cm"]["t_turns"] = f"{Cm['t_only_turns']:.1f}"; S["b_cm"]["a_turns"] = f"{Cm['all_turns']:.1f}"
+    S["b_cm"]["rho2"] = f"{Cm['spearman']:.2f}"
+    S["b_rec"] = {k: f3(v["gain"]).replace("0.", "0.") for k, v in Cm["recall_at_budget"].items()}
+    S["b_rec_signs"] = [v["gain"] for v in Cm["recall_at_budget"].values()]
+    S["b_rec_consistent"] = all(x > 0 for x in S["b_rec_signs"])
+    Q = st["E0_seq_seeds"]
+    S["b_seq"] = {k: {s: f3(v[s]) for s in ("mean", "sd", "min", "max")} for k, v in Q.items()}
+    S["b_lstm_best"] = Q["lstm"]["mean"] > B["lr_seeds"]["mean"]
+    S["b_lstm_gap"] = f3(Q["lstm"]["mean"] - B["lr_seeds"]["mean"])
+    Nn = st["E11_nested"]
+    for tag, key in (("np", "primary"), ("nr", "reverse")):
+        o = Nn[key]
+        S[f"{tag}_sel"] = ", ".join(o["selected"]); S[f"{tag}_same"] = o["same_as_pooled"]
+        S[f"{tag}_cf"], S[f"{tag}_lr8"] = f3(o["auc_cf_nested"]), f3(o["auc_lr8"])
+        d, (lo, hi) = o["H1_diff"]; S[f"{tag}_h1"] = {"d": f3(d), "lo": f3(lo), "hi": f3(hi)}
+        lo, hi = o["H2_ci"]; S[f"{tag}_h2"] = {"lo": f3(lo), "hi": f3(hi)}
+        S[f"{tag}_H1"], S[f"{tag}_H2"] = o["H1_noninferior"], o["H2_transfer"]
+        S[f"{tag}_wdrop"] = f3(o["drops"]["writing_request"])
     S["today"] = datetime.date.today().strftime("%d %B %Y")
     return S
 
@@ -161,7 +190,7 @@ def main():
     S = build_context(st, a.repo_url, a.doi)
     os.makedirs(a.outdir, exist_ok=True)
     figdir = a.figdir or os.path.dirname(os.path.abspath(a.stats))
-    for f in ("fig4_fuzzy.png", "fig5_fuzzy.png", "fig7_transfer.png"):
+    for f in ("fig3_benchmark.png", "fig4_ablation_permutation.png", "fig4_fuzzy.png", "fig5_fuzzy.png", "fig7_transfer.png"):
         shutil.copy(os.path.join(figdir, f), os.path.join(HERE, "figs", f))
     render(os.path.join(HERE, "manuscript_template.txt"), S, os.path.join(a.outdir, "manuscript.txt"))
     render(os.path.join(HERE, "cover_letter.txt"), S, os.path.join(a.outdir, "cover_letter.txt"))

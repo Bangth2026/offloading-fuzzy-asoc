@@ -59,10 +59,18 @@ def test_end_to_end_fill(tmp_path=None):
     subprocess.run([sys.executable, os.path.join(ROOT, "src", "run_transfer.py"), "--units", os.path.join(tmp, "units2.pkl"),
                     "--stats", os.path.join(tmp, "stats.json"), "--out", os.path.join(tmp, "tr.json"),
                     "--seeds", "2", "--epochs", "1"], check=True, stdout=subprocess.DEVNULL)
+    for args in (["run_nested.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "n.json"),
+                  "--frozen", os.path.join(tmp, "fr.json")],
+                 ["reproduce_benchmark.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "b.json"),
+                  "--figdir", tmp, "--perms", "3", "--epochs", "1"],
+                 ["seq_seeds.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "q.json"),
+                  "--seeds", "2", "--epochs", "1"]):
+        subprocess.run([sys.executable, os.path.join(ROOT, "src", args[0])] + args[1:] + ["--stats", os.path.join(tmp, "stats.json")],
+                       check=True, stdout=subprocess.DEVNULL)
     subprocess.run([sys.executable, os.path.join(ROOT, "src", "make_fig_transfer.py"), os.path.join(tmp, "tr.json"),
                     os.path.join(tmp, "fig7_transfer.png")], check=True, stdout=subprocess.DEVNULL)
     out = subprocess.run([sys.executable, os.path.join(ROOT, "manuscript", "fill_manuscript.py"),
                           "--stats", os.path.join(tmp, "stats.json"), "--repo-url", "https://example.org/demo",
-                          "--doi", "10.0000/demo", "--allow-fewer-seeds", "--outdir", os.path.join(tmp, "build")], check=True)
+                          "--doi", "10.0000/demo", "--allow-fewer-seeds", "--figdir", tmp, "--outdir", os.path.join(tmp, "build")], check=True)
     txt = open(os.path.join(tmp, "build", "manuscript.txt"), encoding="utf8").read()
     assert "[TBD" not in txt and "{{" not in txt

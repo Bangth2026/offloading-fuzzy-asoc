@@ -39,6 +39,11 @@ python src/run_followup.py --units results/units.pkl --stats results/paper_stats
 #    cross-semester confirmation E10 (Section 7.9; plan in PREREG_E10.md, committed before the run; ~5 min)
 python src/run_transfer.py --units results/units.pkl --stats results/paper_stats_fuzzy.json --out results/transfer_stats.json
 python src/make_fig_transfer.py results/transfer_stats.json results/fig7_transfer.png
+#    E11 nested input selection + frozen model (plan in PREREG_E11.md)
+python src/run_nested.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
+#    benchmark, ablation, permutation, complementarity (Table 3, Sections 7.2, 7.5, 7.7)
+python src/reproduce_benchmark.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
+python src/seq_seeds.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \
