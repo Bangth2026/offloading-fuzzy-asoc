@@ -8,6 +8,9 @@ results/*
 !results/run_log.txt
 !results/followup_stats.json
 !results/followup_log.txt
+!results/transfer_stats.json
+!results/transfer_log.txt
+!results/fig7_transfer.png
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png

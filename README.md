@@ -36,6 +36,9 @@ python src/run_fuzzy_experiments.py --units results/units.pkl --out results/pape
 python src/input_diagnostics.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
 #    follow-up E7-E9 (Section 7.8; plan in PREREG_E7_E9.md, committed before the run; ~25 min)
 python src/run_followup.py --units results/units.pkl --stats results/paper_stats_fuzzy.json --out results/followup_stats.json
+#    cross-semester confirmation E10 (Section 7.9; plan in PREREG_E10.md, committed before the run; ~5 min)
+python src/run_transfer.py --units results/units.pkl --stats results/paper_stats_fuzzy.json --out results/transfer_stats.json
+python src/make_fig_transfer.py results/transfer_stats.json results/fig7_transfer.png
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \

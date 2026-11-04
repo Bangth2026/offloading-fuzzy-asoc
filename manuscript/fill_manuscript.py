@@ -114,6 +114,25 @@ def build_context(st, repo_url, doi):
     S["fu_oe_d"], S["fu_oe_lo"], S["fu_oe_hi"] = f3(m), f3(lo), f3(hi)
     import numpy as _np
     S["fu_z"] = {j: f"{_np.mean(v):.2f}" for j, v in F["learned_z_seed0"].items()}
+    T = st["E10_transfer"]
+    for tag, key in (("p", "primary"), ("r", "reverse")):
+        o = T[key]
+        S[f"t{tag}_ntr"], S[f"t{tag}_nte"] = o["n_train"], o["n_test"]
+        for m, v in o["auc"].items():
+            S[f"t{tag}_{m}"] = f3(v)
+        d, (lo, hi) = o["H1_cf_minus_lr8"]; S[f"t{tag}_h1"] = {"d": f3(d), "lo": f3(lo), "hi": f3(hi)}
+        lo, hi = o["H2_cf_ci"]; S[f"t{tag}_h2"] = {"lo": f3(lo), "hi": f3(hi)}
+        d, (lo, hi) = o["H4_fusion_minus_lr8"]; S[f"t{tag}_h4"] = {"d": f3(d), "lo": f3(lo), "hi": f3(hi)}
+        d, (lo, hi) = o["cf_minus_lr3"]; S[f"t{tag}_l3"] = {"d": f3(d), "lo": f3(lo), "hi": f3(hi)}
+        h = o["H3"]
+        S[f"t{tag}_h3"] = {"m0": f3(h["mean_none"]), "s0": f3(h["sd_none"]), "m1": f3(h["mean_cf_imp"]),
+                           "s1": f3(h["sd_cf_imp"]), "d": f3(h["mean_diff"]), "npos": h["n_pos"], "p": fp(h["wilcoxon_p"])}
+        S[f"t{tag}_z"] = {k.replace(" ", "_").replace("=", ""): f"{v:.2f}" for k, v in o["consequents"].items()}
+        S[f"t{tag}_base"] = f"{o['train_base_rate']:.2f}"
+        dec = T["decisions" if key == "primary" else "reverse_decisions"]
+        for k, v in dec.items():
+            S[f"t{tag}_{k.split('_')[0]}"] = v
+    S["t_prev"] = f"{T['primary']['test_prevalence']:.2f}"
     S["today"] = datetime.date.today().strftime("%d %B %Y")
     return S
 
@@ -142,7 +161,7 @@ def main():
     S = build_context(st, a.repo_url, a.doi)
     os.makedirs(a.outdir, exist_ok=True)
     figdir = a.figdir or os.path.dirname(os.path.abspath(a.stats))
-    for f in ("fig4_fuzzy.png", "fig5_fuzzy.png"):
+    for f in ("fig4_fuzzy.png", "fig5_fuzzy.png", "fig7_transfer.png"):
         shutil.copy(os.path.join(figdir, f), os.path.join(HERE, "figs", f))
     render(os.path.join(HERE, "manuscript_template.txt"), S, os.path.join(a.outdir, "manuscript.txt"))
     render(os.path.join(HERE, "cover_letter.txt"), S, os.path.join(a.outdir, "cover_letter.txt"))

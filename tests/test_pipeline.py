@@ -52,6 +52,15 @@ def test_end_to_end_fill(tmp_path=None):
     subprocess.run([sys.executable, os.path.join(ROOT, "src", "run_followup.py"), "--units", os.path.join(tmp, "units.pkl"),
                     "--stats", os.path.join(tmp, "stats.json"), "--out", os.path.join(tmp, "fu.json"),
                     "--seeds", "2", "--epochs", "1"], check=True, stdout=subprocess.DEVNULL)
+    for i, u in enumerate(U):
+        if (i // 3) % 2:
+            u["group_key"] = u["group_key"].replace("_f24", "_s25")
+    pickle.dump(U, open(os.path.join(tmp, "units2.pkl"), "wb"))
+    subprocess.run([sys.executable, os.path.join(ROOT, "src", "run_transfer.py"), "--units", os.path.join(tmp, "units2.pkl"),
+                    "--stats", os.path.join(tmp, "stats.json"), "--out", os.path.join(tmp, "tr.json"),
+                    "--seeds", "2", "--epochs", "1"], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([sys.executable, os.path.join(ROOT, "src", "make_fig_transfer.py"), os.path.join(tmp, "tr.json"),
+                    os.path.join(tmp, "fig7_transfer.png")], check=True, stdout=subprocess.DEVNULL)
     out = subprocess.run([sys.executable, os.path.join(ROOT, "manuscript", "fill_manuscript.py"),
                           "--stats", os.path.join(tmp, "stats.json"), "--repo-url", "https://example.org/demo",
                           "--doi", "10.0000/demo", "--allow-fewer-seeds", "--outdir", os.path.join(tmp, "build")], check=True)
