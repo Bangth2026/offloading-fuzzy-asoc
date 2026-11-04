@@ -1,0 +1,317 @@
+!TITLE Fuzzy Rule-Constrained Sequential Learning for Detecting Cognitive Offloading in Student–Large Language Model Tutoring Dialogues
+!CENTER Hai Bang Truong
+!CENTER Faculty of Engineering and Computer Science, Saigon International University, Ho Chi Minh City, Vietnam
+!CENTER truonghaibang@siu.edu.vn · ORCID 0000-0001-5094-3128
+
+## Highlights
+- Offloading risk is scored from turn-level student–LLM dialogue behaviour.
+- A five-rule fuzzy TSK base encodes expert knowledge on delegation and checking.
+- Rules enter Transformer training as Łukasiewicz implication constraints.
+- Rule firing degrees give each risk score an auditable explanation.
+- Sequential and aggregate models flag partly different at-risk students.
+
+## Abstract
+Large language model (LLM) assistants let students submit correct work while handing the underlying reasoning to the model, a pattern termed cognitive offloading that grade-based assessment cannot see. The behavioural indicators of offloading, such as how often generated code is accepted without a following check, are graded quantities, and the boundary between productive and delegating use is imprecise. We therefore treat offloading-risk estimation as a weakly supervised neuro-fuzzy problem. A five-rule zero-order Takagi–Sugeno–Kang (TSK) rule base, with membership breakpoints fitted on training folds only, encodes expert behavioural knowledge; its rules enter the training of a Transformer sequence encoder as Łukasiewicz implication constraints, which penalise the network only where a rule fires, and the same firing degrees form the explanation attached to each score. On the StudyChat corpus of real student–ChatGPT dialogues from a university AI course, we build 464 weakly labelled units from 175 students, with the label derived from the gap between AI-assisted assignment and unaided exam performance. An aggregate dialogue-act logistic regression reaches AUC 0.654 (permutation p < 0.002) and the unconstrained Transformer 0.635. Across ten paired seeds, the fuzzy implication constraint changes AUC by {{S.imp_d}} (Holm-adjusted Wilcoxon p = {{S.imp_p}}){% if S.imp_sig and S.imp_pos %}, a significant gain{% elif S.imp_sig %}, a significant loss{% else %}, a change that is not significant{% endif %}, and {% if S.viol_drop %}lowers held-out rule violation from {{S.v_imp0}} to {{S.v_imp1}}{% else %}leaves held-out rule violation essentially unchanged ({{S.v_imp0}} at λ = 0, {{S.v_imp1}} at λ = 1){% endif %}. Used on its own, the fuzzy rule score ranks units with AUC {{S.f_auc}} against {{S.c_auc}} for a crisp version of the same rules{% if S.fc_sig %} (difference {{S.fc_d}}, 95% CI {{S.fc_lo}} to {{S.fc_hi}}){% else %}, a difference whose 95% confidence interval includes zero{% endif %}. The aggregate and sequential models are complementary (Spearman ρ = 0.45): the Transformer recovers low-volume, high-acceptance students that the frequency model misses. We state the label-proxy and single-course limits that bound these claims.
+
+**Keywords:** Cognitive offloading; Fuzzy rule base; Takagi–Sugeno–Kang inference; Neuro-fuzzy learning; Differentiable fuzzy logic; Explainable artificial intelligence; Learning analytics; Weak supervision
+
+# 1. Introduction
+Interactive learning tools built on large language models give students on-demand access to explanations, code and worked solutions. A student can use that access to resolve a specific misconception, or to hand over the reasoning step itself while still submitting correct work. Course grades cannot separate the two cases, because both produce a passing submission. The cognitive-science literature calls the second pattern cognitive offloading, the use of external tools to reduce internal cognitive demand [1]; in a course, sustained offloading of reasoning, rather than of retrieval or arithmetic, risks leaving the target competency undeveloped while short-term performance holds.
+
+Detecting offloading automatically meets two obstacles. Most public student–AI logs record usage volume or coarse task labels, not the turn-level detail needed to tell a student who asks a clarifying conceptual question from one who pastes an error message and asks for a corrected file. And no dataset labels offloading directly: it is a latent cognitive state, so any supervised model rests on a proxy. StudyChat [2] removes the first obstacle. It contains real, consented student–ChatGPT dialogues from a university AI course, annotated with a two-level dialogue-act schema and, since its latest release, linked to assignment and exam scores. Its originating study also motivates a proxy for the second obstacle: a cluster of students whose turns were dominated by writing-delegation requests averaged 83.8% on exams against 89.0% for a cluster dominated by targeted coding questions, although both scored above 93% on the AI-assisted assignments [2]. A gap between assisted and unaided performance is what offloading theory predicts.
+
+A third difficulty is specific to the behavioural evidence and is the reason this paper takes a soft-computing approach. The quantities an instructor would reason with (the share of generated outputs accepted without a following edit, the length of runs of assignment-specific questions, the balance between pasting context and verifying answers) are rates, not events. A student who accepts 48% of generated outputs unchecked is not categorically different from one who accepts 52%, yet a threshold rule treats them as opposite cases. Our earlier version of this system used such crisp rules for its explanations and a linear average of the rates as a training target, and found that pulling the network toward that average left accuracy unchanged. Fuzzy sets [3] give a principled alternative: each rate is described by overlapping linguistic terms (LOW, HIGH), each rule fires to a degree, and a TSK rule base [4] turns those degrees into a graded rule score. Differentiable fuzzy logic also offers a different way to inject rules into a network: instead of regressing every prediction toward one target, a rule can be read as a fuzzy implication that is violated only when its antecedent holds and the prediction disagrees with its consequent [5–7].
+
+This paper makes three contributions.
+
+- We formulate cognitive-offloading detection as a weakly supervised sequence-to-score problem over student–LLM dialogue turns, with a label built from the assessment structure and scoring formula documented in the dataset release, giving 464 labelled units from 175 students.
+- We propose a neuro-fuzzy training scheme in which a five-rule zero-order TSK rule base, fitted without access to the test fold, constrains a Transformer encoder through a Łukasiewicz implication loss, and compare it under paired multi-seed tests with an unconstrained encoder, a linear rule target and a TSK regression target.
+- We evaluate the rule base as an explanation device in its own right: its standalone ranking power, its sensitivity to membership breakpoints compared with crisp thresholds, and the rule-firing profile of the students the model flags. Alongside these, we report where the sequential model does and does not add value over an interpretable aggregate baseline.
+
+Section 2 reviews related work. Section 3 states the problem, Section 4 describes the data and Section 5 the method. Sections 6 and 7 give the protocol and results, and Sections 8 to 11 discuss findings, limitations, ethics and conclusions.
+
+# 2. Related work
+## 2.1 Cognitive offloading and over-reliance on AI
+Cognitive offloading was introduced to describe the use of physical action or external tools to lower the information-processing demand of a task [1]. In education the construct has recently been extended to LLM-assisted work along several lines. Bastani et al. [8] show experimentally that unrestricted generative-AI access can reduce learning gains even while assisted-phase performance improves. Fan et al. [9] describe metacognitive laziness, the suppression of self-monitoring when fluent answers are easy to obtain, and Kosmyna et al. [10] report reduced EEG connectivity and weaker essay recall among writers who used an LLM. Lee et al. [11] find that knowledge workers' self-reported reductions in cognitive effort track their confidence in the AI rather than task difficulty, and Köbis et al. [12] show that delegating a decision to AI can increase dishonest behaviour. On the measurement side, Zheng et al. [13] describe reliance patterns in field-collected student–ChatGPT conversations, Hou et al. [14] validate a self-report reliance scale, and RelianceScope [15] codes chat and code-edit logs into nine qualitative reliance patterns. These studies are experimental, self-report or qualitative. The present work instead builds a predictive, turn-level risk score supervised by an objective performance-gap proxy and evaluates it quantitatively.
+
+## 2.2 Sequential models of students
+Knowledge tracing estimates evolving mastery from sequences of graded attempts, from Bayesian knowledge tracing to Deep Knowledge Tracing [16], self-attentive knowledge tracing [17] and the context-aware attentive model AKT [18]. These architectures assume a correctness signal at every step. Offloading detection has none; here the sequential unit is the behavioural category of a dialogue turn, and supervision comes from an assessment-level outcome, which requires the group-aware aggregation of Sections 3 and 5.
+
+## 2.3 Dialogue-act analysis of student–LLM interaction
+The StudyChat study annotates 16,851 student utterances with 8 broad and 31 specific dialogue acts and reports that utterance count adds little to a prior-performance baseline (mean R² gain of 0.006 to 0.018), whereas specific dialogue-act composition explains substantially more (mean R² of 0.40 to 0.49) [2]. This motivates modelling the category and order of turns rather than usage volume, and avoiding usage frequency as a risk indicator in itself.
+
+## 2.4 Injecting rules into neural networks: neuro-symbolic and neuro-fuzzy routes
+Neuro-symbolic AI combines the transparency of expert rules with the predictive capacity of neural networks [19,20]. One family of methods injects first-order rules into training through soft constraints: Hu et al. [5] distil logic rules into a network through a teacher built from rule-regularised posteriors, the semantic loss of Xu et al. [6] penalises probability mass on assignments that violate a propositional constraint, and Logic Tensor Networks [21] ground first-order formulas in fuzzy truth values that are maximised during learning. Van Krieken et al. [7] analyse which fuzzy operators behave well under gradient descent and show that the choice of implication shapes the gradients a rule sends to the network. A second family is the classical neuro-fuzzy line, in which a fuzzy rule base is itself the model: ANFIS [22] tunes the membership functions and consequents of a TSK system [4] by gradient learning, building on the linguistic control tradition of Mamdani and Assilian [23]. Our design sits between the two. The rule base is not the predictor and is not trained; it stays as expert-authored knowledge with data-fitted breakpoints, and it constrains a separate sequence model through an implication loss. In education, Hooshyar et al. [24] argue that deep learner models need injected educational knowledge to be deployable responsibly and add curriculum and prerequisite knowledge to a knowledge-tracing model. We share the aim but differ in construct (behaviour toward an LLM rather than prerequisite structure) and in mechanism (graded fuzzy implications rather than crisp constraints). Within the 24 works reviewed here, we found none that applies fuzzy rule constraints to the detection of cognitive offloading in student–LLM dialogue.
+
+# 3. Problem statement and formulation
+Given the turn-level dialogue between a student and an LLM assistant while the student completes a group of related assignments, and the student's later score on the proctored exam covering the same material, the task is to estimate a continuous offloading-risk score that (a) correlates with the gap between assisted and unaided performance, (b) is computable from behaviour observed before the exam, and (c) comes with a justification an instructor can audit. No direct label for offloading exists, so the target is built from an observable proxy, and the model's claims are bounded by how well that proxy tracks the construct (Section 9).
+
+Let student i complete assignment a with a sequence of turns T = (t_1, …, t_n). Each turn t_k has a feature vector x_k with (1) the specific dialogue-act label; (2) a verbatim-acceptance indicator, set when a Writing turn is not followed in the same conversation by an Editing or Verification turn; (3) inter-turn latency; (4) a self-attempt indicator, set when a Writing request is preceded in the same conversation by a Provide Context turn carrying pasted code or error output; and (5) a surface-dependency indicator, set inside a run of three or more consecutive Contextual Questions turns not interrupted by a Conceptual Questions turn.
+
+The unit of analysis follows the course's assessment structure, which the dataset documents directly: assignments a1 and a2 precede Exam 1, a3 and a4 precede Exam 2, and a5 to a7 precede the Final Exam. A unit is therefore a (student, semester, assessment-group) triple, up to three per student per semester. For group g with assignments {a} and following exam e, let llm_g be the assignment score weighted by each assignment's documented maximum points and no_llm_g the score on exam e. The weak target is y = clip((llm_g − no_llm_g) / llm_g, 0, 1), so that students who do better unaided than assisted, the expected pattern for productive use, receive zero risk. The target can also be depressed by exam difficulty, by topic misalignment between a group and its exam, and by ordinary variance; Section 9 discusses these threats. Models are evaluated by the correlation of r with y on held-out students and by classifying the top quartile of y, with folds constrained so that all units of a student stay together (Section 6.1). A coarser semester-level version of the target, pooling all assignments and exams, is used only for the crisp cross-check in Section 7.7, since an instructor flag is naturally issued once per student per semester.
+
+!CODE
+Algorithm 1. Assessment-group weak-label construction
+Input : score table S (a1..a7, e1..e3 per student and semester);
+        max-points table MP[semester][assessment]  (scores/README.md)
+Output: label set L = {(student, semester, group, y)}
+1  G <- {(g1,[a1,a2],e1), (g2,[a3,a4],e2), (g3,[a5,a6,a7],e3)}
+2  L <- empty list
+3  for each row s in S:
+4      for each (name, assigns, exam) in G:
+5          llm_g    <- sum(s[a]*MP[s.sem][a] for a in assigns) / sum(MP[s.sem][a] for a in assigns)
+6          no_llm_g <- s[exam]
+7          y        <- clip((llm_g - no_llm_g) / llm_g, 0, 1)
+8          append (s.userId, s.sem, name, y) to L
+9  return L
+!END
+
+Algorithm 1 is deterministic, uses only quantities documented in the dataset release, and has no free parameter beyond the clipping range.
+
+# 4. Dataset
+StudyChat contains 2,214 student–ChatGPT dialogues from 203 consenting students in an undergraduate AI course (COMPSCI 383) at the University of Massachusetts Amherst, Fall 2024 and Spring 2025, with 16,851 utterances across seven graded programming assignments [2]. Each utterance carries a dialogue act from the schema in Table 1, assigned by prompting GPT-4.1. Two agreement figures must be kept apart. During schema development two annotators reached Cohen's κ of 0.910 (broad) and 0.788 (specific) on a curated set. On a separate held-out set of 154 utterances, agreement between GPT-4.1 and humans was 0.582 (broad) and 0.493 (specific), on par with human–human agreement on the same set (0.578 and 0.538). The held-out figure is the relevant one for features derived at scale, and Section 9 returns to it. Release v1.1 (Spring 2026) added assignment and exam scores for consenting students, which the target in Section 3 requires.
+
+The dataset is licensed CC BY 4.0 and access-gated on Hugging Face (wmcnicho/StudyChat). We downloaded dialogues/f24_labeled_dialogues.jsonl (232,987,304 bytes) and dialogues/s25_labeled_dialogues.jsonl (390,499,753 bytes) through the huggingface_hub API on 22 August 2026; both sizes matched the repository listing and the combined record count (6,864 + 9,987 = 16,851) matched the published total. Personally identifiable information was removed by the original authors through an iterative regular-expression pipeline (6,413 likely instances removed, none found in a second pass); the data are still treated as real student data under the licence. Matching against the scores release (Section 7.1) yields the 175-student analysis sample.
+
+!TABLE
+Broad category | Count | Relevance to offloading risk
+Writing | 4,336 | Direct delegation of the writing or coding task; risk-bearing when not followed by verification.
+Conceptual Questions | 5,199 | Learning-oriented use; associated with better exam outcomes in the source study.
+Contextual Questions | 2,938 | Questions tied to the current assignment; negatively associated with outcomes in both semesters.
+Provide Context | 3,028 | Student supplies code or error messages for the model to act on; often precedes delegation.
+Verification | 647 | Checking AI output; candidate protective factor.
+Editing | 418 | Refining AI output; active engagement rather than passive acceptance.
+Off Topic | 250 | Non-academic use; excluded from the risk model.
+Misc. | 35 | Residual category.
+!END
+!CAP Table 1. Broad dialogue-act categories and counts published for StudyChat [2], with our reading of each category's relevance to the rule inputs of Section 5.3.
+
+# 5. Proposed method
+## 5.1 Pipeline overview
+Figure 1 shows the pipeline. Score tables and dialogue turns are processed separately by Algorithm 1 (weak labels) and Algorithm 2 (turn features and unit-level rates), then merged into the unit dataset that every model in Table 3 consumes. The fuzzy rule base of Section 5.3 takes the four unit-level rates as input. It is used twice: as a constraint inside the Transformer's training loss (Section 5.4), and as the source of the explanation attached to each score.
+
+!FIG figs/fig1_pipeline.png | Figure 1. Pipeline from the two StudyChat releases to the risk score and its explanation. Algorithm 1 builds weak labels, Algorithm 2 extracts turn features and the unit rates v, u, p, e, and Algorithm 3 trains the Transformer with the fuzzy implication loss. The fuzzy rule base is fitted on each training fold, injected into the loss (solid purple arrow) and used to explain each score (dashed arrow).
+
+!CODE
+Algorithm 2. Turn-level feature extraction and unit rates
+Input : turns D = (d_1..d_m) of one (student, semester), fields
+        (chatId, interactionCount, timestamp, llm_label)
+Output: feature sequence X = (x_1..x_m)
+1  sort D by (chatId, interactionCount)
+2  for k = 1..m:
+3      (broad_k, specific_k) <- split(d_k.llm_label, '>')
+4      latency_k  <- timestamp_k - timestamp_{k-1} if same chatId else 0
+5      verbatim_k <- 1 if specific_k in WRITING and no later turn of the
+                     same chatId is in EDIT_VERIFY, else 0
+6      self_k     <- 1 if broad_k = WRITING and an earlier turn of the
+                     same chatId has broad = PROVIDE_CONTEXT, else 0
+7      surf_k     <- 1 if the current run of CONTEXTUAL_QUESTIONS turns
+                     (reset by CONCEPTUAL_QUESTIONS) has length >= 3, else 0
+8      x_k <- (specific_k, latency_k, verbatim_k, self_k, surf_k)
+9  unit rates over the turns of an assessment group:
+      v = mean verbatim over WRITING turns;  u = mean surf;
+      p = share of PROVIDE_CONTEXT turns;    e = share of VERIFICATION turns
+10 return X, (v, u, p, e)
+!END
+
+Category identifiers in Algorithm 2 are the lowercase, underscore-separated strings of the released llm_label field (Appendix A), not the display names of Table 1.
+
+## 5.2 Sequential encoder
+Each turn is embedded by concatenating a learned embedding of its specific dialogue act (31 categories) with a linear projection of its scalar and binary features. The sequence is encoded by a Transformer encoder with 2 layers, 2 attention heads and model dimension 32, a size chosen for a corpus of a few hundred labelled sequences, with learned positional embeddings over turn index. A learned [ASSIGN] pooling token, analogous to the classification token of BERT-style encoders, attends over the sequence, and its final representation feeds a two-layer head with sigmoid output that produces the risk score r ∈ (0, 1).
+
+## 5.3 Fuzzy behavioural rule base
+**Inputs and membership functions.** The rule base reads four unit-level rates from Algorithm 2: v (verbatim acceptance), u (surface dependency), p (provide-context share) and e (verification share). Each input x has two linguistic terms with ramp membership functions,
+
+!EQ μ_HIGH(x) = min(1, max(0, (x − a) / (b − a))),    μ_LOW(x) = 1 − μ_HIGH(x),    (1)
+
+where a and b are the 25th and 75th percentiles of that input on the training fold. Fitting the breakpoints inside each fold keeps test units out of the rule base; using quantiles rather than hand-set values makes the terms relative to the cohort, so that HIGH means high for this course. Setting μ_HIGH to a step at (a + b)/2 gives the crisp control used in Sections 7.3 and 7.4 (Figure 2).
+
+!FIG figs/fig_membership.png | Figure 2. Ramp membership functions for one input. The breakpoints a and b are the training-fold quartiles. The dashed step at their midpoint is the crisp control, which assigns units just either side of the midpoint to opposite terms.
+
+**Rules.** Table 2 lists the five rules. FR1 to FR3 are the graded counterparts of the rules R1 to R3 of the crisp design; FR4 and FR5 encode the protective reading of verification and editing in Table 1 and close the rule base for students with no delegation pattern. The rules were fixed from R1 to R3 and Table 1 before any fuzzy experiment was run; in particular, no rule was derived from the ablation in Section 7.5, which used the full dataset and would leak information into the rule base.
+
+!TABLE
+Rule | Antecedent | Consequent z_j | Origin | Explanation text
+FR1 | v is HIGH | 1.00 | R1 | Generated output is usually accepted without a following edit or check.
+FR2 | u is HIGH | 0.75 | R2 | Long runs of assignment-specific questions without a conceptual question.
+FR3 | p is HIGH and e is LOW | 1.00 | R3 | Code or errors are pasted for the model to fix, with little verification.
+FR4 | v is LOW and e is HIGH | 0.00 | Table 1 | Output is checked or edited rather than accepted as-is.
+FR5 | v is LOW and u is LOW and p is LOW | 0.00 | Table 1 | No delegation pattern is present.
+!END
+!CAP Table 2. The fuzzy behavioural rule base. FR2 has a lower consequent because the source study links contextual questioning to weaker outcomes less directly than delegation.
+
+**Inference.** With the product t-norm, the firing degree of rule j for unit i is w_ij = Π_(x,T)∈A_j μ_T(x_i), where A_j is the rule's antecedent. A zero-order TSK system gives the rule score
+
+!EQ s_i = (Σ_j w_ij z_j + w_0 z_0) / (Σ_j w_ij + w_0),    (2)
+
+where a background term w_0 = 0.05, z_0 = 0.5 keeps s defined when no rule fires. The explanation for unit i lists the rules with the two highest firing degrees above 0.2, each with its degree and the text of Table 2; for example, "FR1 (0.86): generated output is usually accepted without a following edit or check".
+
+## 5.4 Injecting the rules into training
+The base objective is binary cross-entropy between r and the top-quartile label y_bin. A rule term is added with weight λ, L = BCE(r, y_bin) + λ L_rule. We compare three rule terms.
+
+**Linear target (the earlier design).** L_lin = mean (r_i − s̃_i)², where s̃ is the min–max-normalised mean of v, u and max(0, p − e). This regresses every prediction toward a single average of the rates, whether or not any rule applies.
+
+**TSK target.** L_tsk = mean (r_i − s_i)², with s from Eq. (2). The target is now produced by the rule base, but it still acts on every unit.
+
+**Fuzzy implication (proposed).** Each rule is read as a fuzzy implication from its antecedent to a statement about r and is evaluated with the Łukasiewicz implication I(a, c) = min(1, 1 − a + c), whose violation 1 − I is max(0, a − c) [7]. For a risk-raising rule (z_j ≥ 0.5) the consequent is "r is at least z_j"; for a risk-lowering rule it is "r is low", with truth value 1 − r. This gives
+
+!EQ L_imp = (1/|B|·|J|) Σ_i [ Σ_{j∈J+} max(0, w_ij z_j − r_i) + Σ_{j∈J−} max(0, r_i − (1 − w_ij)) ],    (3)
+
+where J+ and J− are the raising and lowering rules. A unit on which no rule fires contributes nothing, and a unit on which a rule fires only weakly contributes in proportion to that degree. This is the property the linear target lacks, and it is the reason we expect the implication form to bind the model to the rules where they are informative without disturbing it elsewhere. Because the rule base is not updated by gradient, the rules stay exactly as authored, and the firing degrees used for the explanation are the same quantities that constrained training.
+
+!CODE
+Algorithm 3. Group-aware cross-validated training with fuzzy rule constraints
+Input : units U = {(group_key, X, y, v, u, p, e)}; rule term K in
+        {none, linear, tsk, implication}; weight lambda; folds k = 5; seed
+Output: fold AUC, Pearson r, out-of-fold predictions and firing degrees
+1  y_bin <- 1[y >= quantile_0.75(y)]
+2  folds <- StratifiedGroupKFold(k, stratify = y_bin, groups = group_key, seed)
+3  for (train, test) in folds:
+4      skip fold if y_bin[train] has one class
+5      FRB <- fit breakpoints (a, b) on rates of train only          // Eq. (1)
+6      (s, W)[train] <- FRB.score(train)                              // Eq. (2)
+7      train Transformer on train with loss BCE + lambda * L_K        // Sec. 5.4
+8      r[test] <- predict(test);  (s, W)[test] <- FRB.score(test)
+9      record AUC(y_bin[test], r[test]), pearson(r[test], y[test]), violation L_imp(test)
+10 return means over folds, out-of-fold r, s, W
+!END
+
+Grouping by student and semester in line 2 keeps a student's units in one fold; a plain stratified split at line 2 would leak information and was not used anywhere.
+
+# 6. Experimental design
+## 6.1 Data split
+Splits use StratifiedGroupKFold with five folds, grouped on student identifier and semester and stratified on the top-quartile label, so that a student's Group-1 behaviour never informs a model tested on the same student's Group-2 or Group-3 unit.
+
+## 6.2 Baselines
+The logistic-regression baseline reproduces the aggregate dialogue-act-count regression reported for StudyChat [2], adapted to top-quartile classification. The DKT-style baseline keeps the LSTM architecture but removes dialogue-act identity, keeping only the scalar behavioural flags, to test whether a knowledge-tracing recurrence without behavioural categories suffices [16].
+
+## 6.3 Metrics and pre-specified comparisons
+Primary metrics are AUC for top-quartile classification and the Pearson correlation between r and y, both on held-out folds. For the rule terms we add two consistency metrics computed on held-out units: the Spearman correlation between r and the fuzzy rule score s, and the mean implication violation of Eq. (3). The following were fixed before the fuzzy experiments were run. E1: ten seeds, each giving paired 5-fold AUCs for λ = 0, linear, TSK and implication (λ = 1), compared by two-sided Wilcoxon signed-rank tests (implication, TSK and linear against λ = 0; implication against linear) with Holm correction over the four tests, paired t-tests and Cohen's d as secondary statistics. E2: λ ∈ {0, 0.3, 0.6, 1.0} for each rule term over three seeds. E3: out-of-fold AUC of the rule scores themselves (linear, crisp, fuzzy), with a student-level cluster bootstrap (2,000 resamples) for AUC differences. E4: sensitivity of the rule-score AUC to the breakpoint quantiles over a 3 × 4 grid, for fuzzy and crisp memberships. E5: firing profiles of the units flagged by the implication model. The reading of each result was also fixed in advance: an accuracy difference is called significant only if its Holm-adjusted Wilcoxon p is below 0.05; a difference between rule scores is called reliable only if its 95% bootstrap interval excludes zero; one membership scheme is called more stable than another only if its AUC standard deviation across the breakpoint grid is lower; a rule term is said to reduce rule violation only if held-out violation falls by at least 10% relative to λ = 0; and, should a rule term cost accuracy, the recommended weight is the smallest λ in the sweep whose AUC stays within one seed standard deviation of λ = 0. Sections 7.3 to 7.6 apply these rules as stated.
+
+# 7. Results
+## 7.1 Matched sample and label distribution
+Matching student identifiers across the dialogue and score files gives 65 Fall 2024 and 110 Spring 2025 students with released scores, 175 in total; the remaining 28 enrolled students did not consent to score release. The scores/README.md file documents the assessment order (a1, a2, Exam 1, a3, a4, Exam 2, a5, a6, a7, Final Exam) and the maximum points of every assessment in both semesters, and we use both directly. Requiring at least one dialogue turn on an assignment in the group yields N = 464 units. With the top-quartile cutoff over all units, 116 units (25.0%) form the high-risk class by construction.
+
+## 7.2 Benchmark comparison
+Table 3 reports 5-fold group-aware cross-validated performance, averaged over folds in which both classes were present in training.
+
+!TABLE
+Model | Input representation | AUC | r | Explanation
+Majority class | None | 0.500 | — | No
+Logistic regression (broad DA) | 8 aggregate broad dialogue-act counts | 0.654 | 0.254 | No
+Logistic regression (specific DA) | 26 aggregate specific dialogue-act counts | 0.644 | 0.299 | No
+LSTM | Per-turn DA embedding, latency, flags | 0.569 | 0.159 | No
+DKT-style | LSTM without DA identity | 0.559 | 0.130 | No
+Transformer (λ = 0) | Per-turn DA embedding and features, self-attention | 0.635 | 0.232 | Post hoc only
+Transformer + linear target | As above, L_lin, λ = 1 | {{S.lin_m}} ± {{S.lin_sd}} | {{S.lin_r}} | Rates only
+Transformer + TSK target | As above, L_tsk, λ = 1 | {{S.tsk_m}} ± {{S.tsk_sd}} | {{S.tsk_r}} | Fuzzy firing degrees
+Transformer + fuzzy implication (proposed) | As above, L_imp, λ = 1 | {{S.imp_m}} ± {{S.imp_sd}} | {{S.imp_r}} | Fuzzy firing degrees
+!END
+!CAP Table 3. Benchmark on N = 464 units from 175 students (5-fold group-aware CV). AUC: top-quartile classification; r: Pearson correlation between the predicted score and the continuous target. Rows without ± are single runs with the fixed default seed (42), as in the benchmark pipeline. The three rule-constrained rows are ten-seed means ± SD from the fuzzy experiment harness, whose unconstrained reference (λ = 0) reaches {{S.none_m}} ± {{S.none_sd}}; Section 7.6 compares all four paired by seed.
+
+The aggregate logistic regression over broad dialogue-act counts is the strongest single model (AUC 0.654, r = 0.254), with the unconstrained Transformer close behind (0.635, r = 0.232). At semester granularity (N = 175) the same Transformer scored 0.493, no better than the majority baseline, so the move to assessment-group units changed the picture for the sequential model (Figure 3). The LSTM and DKT-style baselines remain below both. Refitting the logistic regression over 15 further seeds gives AUC 0.647 ± 0.007 (range 0.636 to 0.657). A permutation test with 500 label shuffles, re-running the whole grouped protocol on each, gives a null mean of 0.498 and a null maximum of 0.628, so p < 0.002 (Figure 4b).
+
+!FIG figs/fig3_benchmark.png | Figure 3. Benchmark on the assessment-group sample (N = 464, 5-fold group-aware CV): (a) AUC for top-quartile classification with the chance level marked; (b) Pearson correlation between predicted score and the continuous target.
+
+!FIG figs/fig4_ablation_permutation.png | Figure 4. (a) Feature ablation for the broad dialogue-act logistic regression: AUC drop when each category is removed. (b) Permutation test: the observed AUC (0.654) against the null distribution from 500 label shuffles (mean 0.498, maximum 0.628). The histogram is rendered from the recorded null mean and standard deviation; the p-value is computed from the 500 actual shuffles.
+
+## 7.3 The fuzzy rule score as a predictor in its own right
+Before asking whether the rules help the network, we asked whether they carry signal at all. Computed out of fold, with breakpoints fitted on the training folds, the fuzzy rule score ranks units with AUC {{S.f_auc}} (Spearman with y {{S.f_rho}}), against {{S.c_auc}} for the crisp step version of the same rules and {{S.l_auc}} for the linear average used in the earlier design. The cluster-bootstrap difference between fuzzy and crisp scores is {{S.fc_d}} (95% CI {{S.fc_lo}} to {{S.fc_hi}}) and between fuzzy and linear {{S.fl_d}} (95% CI {{S.fl_lo}} to {{S.fl_hi}}). {% if S.fc_sig and S.fc_pos %}Grading the memberships therefore adds ranking signal beyond thresholding the same rules.{% elif S.fc_sig %}The crisp version ranks units better than the graded one, so on these data the fuzzy form does not earn its place through ranking power.{% else %}The fuzzy and crisp scores rank units similarly, so the case for the fuzzy form cannot rest on ranking power; it has to rest on stability (Section 7.4) and on how the rules enter training (Section 7.6).{% endif %} {% if S.fl_sig and S.fl_pos %}The rule base also ranks units better than the linear average of the same rates, which supports replacing that average as the rule signal.{% elif S.fl_sig %}The linear average of the rates ranks units better than the rule base, a point we return to in Section 8.{% else %}Against the linear average of the same rates the difference is not reliable.{% endif %} All three should be read against the logistic regression (AUC 0.654): {% if S.f_auc_num < 0.654 %}five expert rules with no learned weights fall short of a regression fitted on dialogue-act counts, as expected.{% else %}five expert rules with no learned weights match or exceed a regression fitted on dialogue-act counts, which we did not expect and which deserves replication before it is relied on.{% endif %}
+
+## 7.4 Sensitivity to membership breakpoints
+Crisp rules depend on where the thresholds sit, and the fuzzy rules depend on their breakpoints. We varied the lower breakpoint quantile over {0.1, 0.2, 0.3} and the upper over {0.6, 0.7, 0.8, 0.9}, refitting the rule base inside each training fold. The fuzzy rule-score AUC ranges from {{S.e4f_min}} to {{S.e4f_max}} (SD {{S.e4f_sd}}) across the twelve settings, and the crisp score from {{S.e4c_min}} to {{S.e4c_max}} (SD {{S.e4c_sd}}) (Figure 5). {% if S.e4_stable %}The graded memberships are therefore less sensitive to where the breakpoints sit than the thresholds are, which is the behaviour fuzzy sets are meant to provide: a unit near a breakpoint changes its membership gradually instead of switching rule.{% else %}On this grid the graded memberships are not less sensitive to breakpoint placement than the thresholds, so we make no robustness claim for them.{% endif %} The grid is reported as a sensitivity analysis; the quartile setting used throughout was fixed in advance and was not selected from it.
+
+!FIG figs/fig5_fuzzy.png | Figure 5. Out-of-fold AUC of the crisp (left) and fuzzy (right) rule scores across membership breakpoint quantiles. Breakpoints are refitted on each training fold.
+
+## 7.5 Ablation of dialogue-act categories
+To locate the signal in the logistic regression we refit it eight times, removing one broad category each time. Removing writing_request causes the largest drop (AUC 0.578, a decrease of 0.076), followed by conceptual_questions (0.626, −0.027) and provide_context (0.634, −0.019). Removing any of the other five categories leaves AUC unchanged or marginally higher (Figure 4a). The two categories the model relies on most are the delegation act and the act the source study found positively associated with exam outcomes, which is what the offloading construct predicts; we read this as partial construct validity for the weak label. As noted in Section 5.3, this result was not used to design or tune the rule base.
+
+
+## 7.6 Effect of injecting the fuzzy rules
+Table 4 gives the paired ten-seed comparison. Mean AUC is {{S.none_m}} ± {{S.none_sd}} without a rule term, {{S.lin_m}} ± {{S.lin_sd}} with the linear target, {{S.tsk_m}} ± {{S.tsk_sd}} with the TSK target and {{S.imp_m}} ± {{S.imp_sd}} with the fuzzy implication loss.
+
+!TABLE
+Comparison | Mean ΔAUC | Seeds with Δ > 0 | Wilcoxon p (Holm) | Paired t p | Cohen's d
+Implication vs λ = 0 | {{S.c_imp_none.d}} | {{S.c_imp_none.npos}}/{{S.seeds}} | {{S.c_imp_none.p}} | {{S.c_imp_none.tp}} | {{S.c_imp_none.cd}}
+TSK target vs λ = 0 | {{S.c_tsk_none.d}} | {{S.c_tsk_none.npos}}/{{S.seeds}} | {{S.c_tsk_none.p}} | {{S.c_tsk_none.tp}} | {{S.c_tsk_none.cd}}
+Linear target vs λ = 0 | {{S.c_lin_none.d}} | {{S.c_lin_none.npos}}/{{S.seeds}} | {{S.c_lin_none.p}} | {{S.c_lin_none.tp}} | {{S.c_lin_none.cd}}
+Implication vs linear target | {{S.c_imp_lin.d}} | {{S.c_imp_lin.npos}}/{{S.seeds}} | {{S.c_imp_lin.p}} | {{S.c_imp_lin.tp}} | {{S.c_imp_lin.cd}}
+!END
+!CAP Table 4. Paired comparison of rule terms over ten seeds (5-fold group-aware CV per seed, λ = 1). Wilcoxon p-values are Holm-adjusted over the four comparisons.
+
+Consistency with the rules behaves differently from accuracy. On held-out units, the mean implication violation moves from {{S.v_imp0}} at λ = 0 to {{S.v_imp1}} at λ = 1 under the implication loss, against {{S.v_lin1}} under the linear target and {{S.v_tsk1}} under the TSK target; the Spearman correlation between r and the fuzzy rule score moves from {{S.rho_imp0}} to {{S.rho_imp1}} (Figure 6). {% if S.imp_sig and S.imp_pos %}The implication loss raises AUC by {{S.imp_d}} (Cohen's d = {{S.c_imp_none.cd}}, positive in {{S.c_imp_none.npos}} of {{S.seeds}} seeds), and the gain survives Holm correction. This is evidence that the rule constraints add signal here and not only consistency, but it comes from one course and one training budget and needs replication before it is relied on.{% elif S.imp_sig %}The implication loss costs {{S.imp_d_abs}} AUC (Holm-adjusted p = {{S.imp_p}}). {% if S.lam_ok %}In the λ sweep, λ = {{S.lam_ok}} keeps AUC within one seed standard deviation of the unconstrained model while still {% if S.lam_ok_viol_drop %}reducing{% else %}not reducing{% endif %} rule violation, and we recommend that weight for deployment.{% else %}No λ in the sweep removes this cost, so on these data rule consistency is bought with accuracy and a deploying institution has to choose between them.{% endif %}{% else %}The implication loss leaves AUC statistically unchanged{% if S.viol_drop %} while reducing held-out rule violation by {{S.viol_drop_pct}}%. The fuzzy rules therefore constrain the model where they fire at no measurable cost to discrimination; this is an interpretability result, not a performance gain.{% else %}, and it does not reduce held-out rule violation either; at this sample size and λ the constraint is inert, and we report it as such.{% endif %}{% endif %} {% if S.imp_vs_lin_sig %}Compared with the linear target of the earlier design, the implication loss differs in AUC by {{S.c_imp_lin.d}} (Holm-adjusted p = {{S.c_imp_lin.p}}).{% else %}Compared with the linear target of the earlier design, the implication loss does not differ significantly in AUC (Holm-adjusted p = {{S.c_imp_lin.p}}); {% if S.imp_fewer_viol_than_lin %}its advantage is that it leaves at least 10% fewer rule violations ({{S.v_imp1}} against {{S.v_lin1}}).{% else %}nor does it leave materially fewer rule violations ({{S.v_imp1}} against {{S.v_lin1}}), so on these data the two ways of injecting the rules are interchangeable.{% endif %}{% endif %}
+
+!FIG figs/fig4_fuzzy.png | Figure 6. (a) Per-seed 5-fold AUC for the four rule terms; thin lines are seeds, the bold line is the mean. (b) Spearman correlation between the prediction and the fuzzy rule score on held-out units as λ increases. (c) Mean implication violation on held-out units as λ increases.
+
+Why constrain the network rather than filter its output afterwards? A post-hoc filter and a model can contradict each other unit by unit with nothing to reconcile them. Under the implication loss, the rules that justify a flag are the rules the model was trained to respect, and λ sets how strongly. These are interpretability arguments; if accuracy alone mattered, the aggregate logistic regression would be the simplest defensible choice on these data.
+
+## 7.7 Complementarity of the aggregate and sequential models, and what the rules say about them
+The out-of-fold scores of the logistic regression and the unconstrained Transformer correlate only moderately (Spearman ρ = 0.45, Pearson r = 0.42). Taking the top quartile of each, 13 truly high-risk units are recovered only by the Transformer and 16 only by the logistic regression. The 13 Transformer-only units have far fewer turns than average (12.1 versus 31.7) and a much higher verbatim-acceptance rate (0.48 versus 0.27), with almost no surface-dependency behaviour: students who use the assistant sparingly but tend to accept generated code without a following check. A count-based model scores them low because their total activity is low; the sequential model reads the order of the short interaction. Averaging the two models' normalised scores raises recall over the logistic regression alone at the tightest flag budgets (+0.043 at top 10%, +0.017 at top 25%) and makes no difference at 15%, 20% or 30%. The benefit is real but conditional, and the aggregate model remains the stronger single predictor.
+
+Among the units flagged by the implication model, {{S.e5_share}}% have at least one risk-raising rule firing at 0.5 or more, so most flags come with a rule-based reason an instructor can check. Mean firing degrees in flagged versus other units are {{S.fr1_f}} versus {{S.fr1_r}} for FR1, {{S.fr2_f}} versus {{S.fr2_r}} for FR2 and {{S.fr3_f}} versus {{S.fr3_r}} for FR3.{% if S.to_n %} For the {{S.to_n}} truly high-risk units flagged by the implication model but not by the logistic regression in this run, FR1 fires at {{S.to_fr1}} on average against {{S.fr1_r}} in unflagged units{% if S.to_fr1_num > S.fr1_r_num %}, consistent with the profile above: the explanation names verbatim acceptance, not volume{% else %}, so for these students the explanation does not single out verbatim acceptance{% endif %}.{% endif %}
+
+**Crisp control.** Our earlier crisp cross-check, run at semester level (N = 175) with thresholds of 0.5 on verbatim acceptance and 0.3 on surface dependency, agreed with the unconstrained Transformer's top-quartile flags in 75.4% of cases (132 of 175); of the 43 disagreements, 31 were flagged only by the model and 12 only by the rules. Agreement moved between 0.651 and 0.777 as the two thresholds varied over a 5 × 4 grid. Two real, de-identified sequences show what the rules capture. In a Fall 2024 student's Assignment 3 and 5 dialogues, Provide Context turns (pasted code and error messages) alternate with Writing Request turns asking for corrected code, giving a verbatim-acceptance rate of 0.51 with no Verification or Editing turn in the window; the crisp rule flags this student and the model does not. A rate of 0.51 sits just above the crisp threshold, which is exactly the situation in which a graded FR1 degree is more informative than an on–off flag. In a Spring 2025 student's Assignment 1 dialogue, eleven consecutive Contextual Questions turns each ask the assistant to answer a multiple-choice comprehension question about an assigned documentary before one Writing Request asks for the reflection essay; this triggers the surface-dependency rule and is one of the 13 units flagged by both model and rules. Both examples come directly from the downloaded files, with only prompt text truncated.
+
+# 8. Discussion
+The design choices follow from published evidence: the weak target uses the dataset's own assessment structure and scoring formula, and modelling dialogue-act sequences rather than usage counts follows from the source study's regression comparison [2]. Because the target is a proxy, a high risk score indicates a behavioural pattern statistically associated with a larger assisted–unaided gap in this population, not a diagnosis of a student's cognitive state.
+
+The main methodological question is what fuzzy rules add over the crisp and linear forms that preceded them. Three answers are possible in principle, and the experiments were set up to separate them. The fuzzy score may rank students better than its crisp counterpart (Section 7.3); it may be less sensitive to arbitrary breakpoint choices (Section 7.4); and the implication form may constrain the network where rules fire without the side effects of regressing every unit toward one target (Section 7.6). On ranking, {% if S.fc_sig and S.fc_pos %}the fuzzy score is reliably better than its crisp counterpart{% elif S.fc_sig %}the crisp counterpart is reliably better, so this answer is not supported{% else %}the two are indistinguishable, so this answer is not supported{% endif %}. On stability, {% if S.e4_stable %}the fuzzy score varies less across breakpoints than the crisp score does{% else %}the fuzzy score is not more stable than the crisp one, so this answer is not supported either{% endif %}. On training, {% if S.imp_sig and S.imp_pos %}the implication loss improves AUC significantly{% elif S.imp_sig %}the implication loss reduces AUC significantly{% else %}the implication loss leaves AUC unchanged{% endif %} and {% if S.viol_drop %}reduces rule violation on held-out units{% else %}does not reduce rule violation on held-out units{% endif %}. A related point is about what the fuzzy form costs. The rule base has no trained parameters, its breakpoints are cohort quantiles, and each explanation is a list of rule degrees an instructor can check against the student's transcript. That makes it easy to audit and also limits how much signal it can contribute: five expert rules should not be expected to match a regression fitted on 26 dialogue-act counts.
+
+The comparison of label granularities is also informative. At semester level (N = 175) the Transformer scored at the majority baseline; at assessment-group level (N = 464) it closed most of the gap to the logistic regression. Sample size is the more plausible explanation, though we did not isolate it from the change in label definition. The ablation shows that most of the logistic regression's signal reduces to two dialogue-act counts, so a simple model captures most of the available signal directly.
+
+Every feature depends on GPT-4.1 dialogue-act labels whose held-out agreement with humans is moderate (κ = 0.582 broad, 0.493 specific). This sets a ceiling on any model built on them, may explain why the broad-level aggregate model is competitive with models that consume noisier specific labels, and may partly explain why turn-order information adds less than expected.{% if S.e4_stable %} The fuzzy rule base is exposed to the same noise through its inputs, but the stability result of Section 7.4 suggests that graded memberships tolerate small shifts in a rate better than thresholds do, since a mislabelled turn moves a rate slightly rather than flipping a flag.{% else %} The fuzzy rule base is exposed to the same noise through its inputs, and Section 7.4 gives no evidence that graded memberships tolerate it better than thresholds.{% endif %} A replication with human-verified labels for a subset of turns, or with an ensemble of annotators to estimate per-label confidence, would separate the model's limits from the labels' limits.
+
+# 9. Limitations and threats to validity
+- Sample size and dependence. The 464 units come from 175 students, so a student's three units are not independent. Group-aware CV prevents leakage across folds, and the permutation test re-runs the grouped protocol, but neither creates independence. A larger or multi-institution corpus is the most direct remedy.
+- Single course. All evidence comes from one upper-division AI course at one university over two semesters. The weak label needs unaided exams that follow assisted assignments on the same material; the dialogue-act schema and the rules were designed for programming work; and the AUC in the mid-0.60s is a single-course estimate. A convincing test would apply the unchanged pipeline to at least one course in another subject and institution and report per-course results.
+- Weak-label noise. The assisted–unaided gap is also driven by exam difficulty, topic misalignment and ordinary variance; the source study's prior-performance baseline explains only R² 0.17 to 0.18 of the outcome, which caps achievable AUC.
+- Hawthorne effect. Students knew their conversations were recorded, so estimated offloading is a lower bound on unmonitored behaviour.
+- LLM-generated dialogue-act labels. Moderate held-out agreement propagates into every rate the rule base reads and into the two categories the ablation identifies as most predictive.
+- Expert rules and breakpoints. The rule base encodes one author's reading of R1 to R3 and Table 1, and the consequent of FR2 (0.75) is a judgement. Section 7.4 tests the breakpoints but not alternative rule sets or consequents; a learned variant in which consequents or breakpoints are tuned on training folds, ANFIS-style [22], is a natural next step but would trade some auditability for fit.
+- Construct validity. Offloading is operationalised through a behavioural and outcome proxy. The ablation gives indirect support, but the score is a decision-support signal, not a validated psychometric instrument.
+
+# 10. Ethical considerations
+An offloading-risk score used in a live course carries stakes beyond a benchmark: a false positive can stigmatise legitimate help-seeking, and a false negative gives false reassurance. We recommend showing the score and its rule explanation to the student first, as a prompt for self-reflection, before any instructor-facing use. StudyChat was collected under IRB approval with informed consent and PII filtering; this study is a secondary analysis of that public, de-identified dataset, and Saigon International University does not require separate ethics approval for such analyses. Researchers reusing the data remain bound by its CC BY 4.0 licence and by their institution's human-subjects rules if derived scores are applied to real students.
+
+# 11. Conclusion
+This paper detects cognitive-offloading risk in student–LLM dialogues with a Transformer encoder constrained by a fuzzy behavioural rule base. The rules are graded through training-fold memberships, combined by zero-order TSK inference, injected into training as Łukasiewicz implication constraints, and reused unchanged as the explanation attached to each score. On 464 units from 175 students in the StudyChat corpus, an aggregate dialogue-act logistic regression (AUC 0.654, permutation p < 0.002) and the unconstrained Transformer (0.635) are complementary rather than redundant (ρ = 0.45), with the sequential model recovering low-volume, high-acceptance students that a count-based model misses. Under paired ten-seed tests the fuzzy implication constraint {% if S.imp_sig and S.imp_pos %}raises AUC by {{S.imp_d}}{% elif S.imp_sig %}lowers AUC by {{S.imp_d_abs}}{% else %}leaves AUC statistically unchanged{% endif %} and {% if S.viol_drop %}reduces held-out rule violation by {{S.viol_drop_pct}}%{% else %}does not reduce held-out rule violation{% endif %}. On its own the fuzzy rule score reaches AUC {{S.f_auc}}{% if S.fc_sig %}, reliably {% if S.fc_pos %}above{% else %}below{% endif %} its crisp counterpart{% else %}, indistinguishable from its crisp counterpart{% endif %}, and it is {% if S.e4_stable %}less{% else %}not less{% endif %} sensitive to breakpoint placement than crisp thresholds. An ablation places the predictive signal in writing-delegation and conceptual-question turns, as offloading theory predicts. The limits in Section 9, above all the single course and the noisy proxy label, must be addressed by a multi-site replication before the system supports instructor-facing decisions.
+
+# Declarations
+**CRediT authorship contribution statement.** Hai Bang Truong: Conceptualization, Methodology, Software, Formal analysis, Data curation, Investigation, Validation, Visualization, Writing – original draft, Writing – review & editing.
+
+**Declaration of competing interest.** The author declares no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+**Data availability.** The study uses the publicly available StudyChat dataset [2] (CC BY 4.0; huggingface.co/datasets/wmcnicho/StudyChat; access requires a free account and acceptance of a contact-information agreement). No new data were collected. The code that reproduces every reported result, including the fuzzy rule base and all experiments in Section 6.3, is openly available at {{S.repo_url}} and archived on Zenodo (https://doi.org/{{S.doi}}).
+
+**Funding.** This research did not receive any specific grant from funding agencies in the public, commercial or not-for-profit sectors.
+
+**Declaration of generative AI and AI-assisted technologies in the writing process.** During the preparation of this work the author used an AI-based assistant to support drafting, editing and code development. The author reviewed and edited all content, verified the analysis against the real dataset, and takes full responsibility for the content of the publication.
+
+# Appendix A. Code
+run_real_analysis.py implements the semester-level analysis (N = 175) and the shared turn-feature extraction and model classes. run_real_analysis_v2.py implements the assessment-group analysis (N = 464; Table 3, Sections 7.2 and 7.5), including the maximum-points table transcribed from scores/README.md, the label construction of Section 3 and group-aware evaluation. ablation_and_permtest.py implements the ablation and the permutation test; complementarity.py the analysis of Section 7.7. fuzzy_rules.py implements the membership functions, rule base, TSK inference, explanation text and the three rule terms of Section 5.4; run_fuzzy_experiments.py runs experiments E1 to E5 and writes every number marked in Sections 7.3, 7.4 and 7.6 to a single statistics file. All scripts read the raw StudyChat schema as verified from the downloaded files (prompt, response, topic, messages, timestamp, chatId, userId, interactionCount, chatTotalInteractionCount, llm_label; semester assigned from the source file name). Seeds are fixed by default; multi-seed checks vary only the seed. Exact reproduction should expect minor floating-point variation across PyTorch versions and hardware.
+
+# References
+!REF [1] E.F. Risko, S.J. Gilbert, Cognitive offloading, Trends Cogn. Sci. 20 (2016) 676–688. https://doi.org/10.1016/j.tics.2016.07.002
+!REF [2] H. McNichols, F. Ikram, A. Lan, The StudyChat dataset: Analyzing student dialogues with ChatGPT in an artificial intelligence course, in: Proc. 16th Int. Learning Analytics and Knowledge Conf. (LAK26), ACM, 2026, pp. 53–63.
+!REF [3] L.A. Zadeh, Fuzzy sets, Inf. Control 8 (1965) 338–353. https://doi.org/10.1016/S0019-9958(65)90241-X
+!REF [4] T. Takagi, M. Sugeno, Fuzzy identification of systems and its applications to modeling and control, IEEE Trans. Syst. Man Cybern. SMC-15 (1985) 116–132. https://doi.org/10.1109/TSMC.1985.6313399
+!REF [5] Z. Hu, X. Ma, Z. Liu, E. Hovy, E. Xing, Harnessing deep neural networks with logic rules, in: Proc. 54th Annual Meeting of the Association for Computational Linguistics, 2016, pp. 2410–2420. https://doi.org/10.18653/v1/P16-1228
+!REF [6] J. Xu, Z. Zhang, T. Friedman, Y. Liang, G. Van den Broeck, A semantic loss function for deep learning with symbolic knowledge, in: Proc. 35th Int. Conf. Machine Learning, PMLR 80, 2018, pp. 5502–5511.
+!REF [7] E. van Krieken, E. Acar, F. van Harmelen, Analyzing differentiable fuzzy logic operators, Artif. Intell. 302 (2022) 103602. https://doi.org/10.1016/j.artint.2021.103602
+!REF [8] H. Bastani, O. Bastani, A. Sungu, H. Ge, Ö. Kabakcı, R. Mariman, Generative AI can harm learning, SSRN 4895486 (2024).
+!REF [9] Y. Fan, L. Tang, H. Le, K. Shen, S. Tan, Y. Zhao, Y. Shen, X. Li, D. Gašević, Beware of metacognitive laziness: Effects of generative artificial intelligence on learning motivation, processes, and performance, Br. J. Educ. Technol. 56 (2025) 489–530. https://doi.org/10.1111/bjet.13544
+!REF [10] N. Kosmyna, E. Hauptmann, Y.T. Yuan, J. Situ, X.-H. Liao, A.V. Beresnitzky, I. Braunstein, P. Maes, Your brain on ChatGPT: Accumulation of cognitive debt when using an AI assistant for essay writing task, arXiv:2506.08872 (2025).
+!REF [11] H.-P. Lee, A. Sarkar, L. Tankelevitch, I. Drosos, S. Rintel, R. Banks, N. Wilson, The impact of generative AI on critical thinking: Self-reported reductions in cognitive effort and confidence effects from a survey of knowledge workers, in: Proc. 2025 CHI Conf. Human Factors in Computing Systems, ACM, 2025, Article 1121. https://doi.org/10.1145/3706598.3713778
+!REF [12] N. Köbis, et al., Delegation to artificial intelligence can increase dishonest behaviour, Nature 646 (2025) 126–134. https://doi.org/10.1038/s41586-025-09505-x
+!REF [13] J. Zheng, et al., Do students rely on AI? Analysis of student–ChatGPT conversations from a field study, arXiv:2508.20244 (2025).
+!REF [14] C. Hou, G. Zhu, V. Sudarshan, F.S. Lim, Y.S. Ong, Measuring undergraduate students' reliance on generative AI during problem-solving: Scale development and validation, Comput. Educ. 234 (2025) 105329. https://doi.org/10.1016/j.compedu.2025.105329
+!REF [15] H. Jin, M. Yoo, J. Han, Z. Chen, S.-Y. Ahn, X. Wang, RelianceScope: An analytical framework for examining students' reliance on generative AI chatbots in problem solving, in: Proc. 13th ACM Conf. Learning @ Scale (L@S 2026), 2026. arXiv:2602.16251.
+!REF [16] C. Piech, J. Bassen, J. Huang, S. Ganguli, M. Sahami, L.J. Guibas, J. Sohl-Dickstein, Deep knowledge tracing, in: Advances in Neural Information Processing Systems 28, 2015.
+!REF [17] S. Pandey, G. Karypis, A self-attentive model for knowledge tracing, in: Proc. 12th Int. Conf. Educational Data Mining, 2019, pp. 384–389.
+!REF [18] A. Ghosh, N. Heffernan, A.S. Lan, Context-aware attentive knowledge tracing, in: Proc. 26th ACM SIGKDD Int. Conf. Knowledge Discovery & Data Mining, 2020, pp. 2330–2339. https://doi.org/10.1145/3394486.3403282
+!REF [19] T.R. Besold, et al., Neural-symbolic learning and reasoning: A survey and interpretation, in: Neuro-Symbolic Artificial Intelligence: The State of the Art, IOS Press, 2021, pp. 1–51.
+!REF [20] A. d'Avila Garcez, L.C. Lamb, Neurosymbolic AI: The 3rd wave, Artif. Intell. Rev. 56 (2023) 12387–12406. https://doi.org/10.1007/s10462-023-10448-w
+!REF [21] S. Badreddine, A. d'Avila Garcez, L. Serafini, M. Spranger, Logic Tensor Networks, Artif. Intell. 303 (2022) 103649. https://doi.org/10.1016/j.artint.2021.103649
+!REF [22] J.-S.R. Jang, ANFIS: Adaptive-network-based fuzzy inference system, IEEE Trans. Syst. Man Cybern. 23 (1993) 665–685. https://doi.org/10.1109/21.256541
+!REF [23] E.H. Mamdani, S. Assilian, An experiment in linguistic synthesis with a fuzzy logic controller, Int. J. Man-Mach. Stud. 7 (1975) 1–13. https://doi.org/10.1016/S0020-7373(75)80002-2
+!REF [24] D. Hooshyar, Y. Yang, G. Šír, T. Kärkkäinen, R. Hämäläinen, M. Cukurova, R. Azevedo, Neural-symbolic knowledge tracing: Injecting educational knowledge into deep learning for responsible learner modelling, arXiv:2604.08263 (2026).

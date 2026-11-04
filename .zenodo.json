@@ -1,0 +1,11 @@
+{
+  "title": "Fuzzy rule-constrained detection of cognitive offloading in student–LLM dialogues: code and manuscript build",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "description": "Code for the manuscript 'Fuzzy Rule-Constrained Sequential Learning for Detecting Cognitive Offloading in Student–Large Language Model Tutoring Dialogues' (submitted to Applied Soft Computing). Includes weak-label and feature construction for the StudyChat corpus, a five-rule zero-order TSK fuzzy rule base, Łukasiewicz implication constraints for Transformer training, experiments E1–E5 with paired multi-seed tests, and a renderer that builds the manuscript from the statistics file under pre-specified interpretation rules. StudyChat data are not included (access-gated, CC BY 4.0).",
+  "creators": [{"name": "Truong, Hai Bang", "affiliation": "Saigon International University", "orcid": "0000-0001-5094-3128"}],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": ["cognitive offloading", "fuzzy rule base", "Takagi-Sugeno-Kang", "neuro-fuzzy learning", "differentiable fuzzy logic", "learning analytics", "large language models"],
+  "related_identifiers": [{"identifier": "https://huggingface.co/datasets/wmcnicho/StudyChat", "relation": "references", "resource_type": "dataset"}]
+}

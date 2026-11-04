@@ -1,0 +1,1 @@
+{ "name": "offloading-fuzzy-manuscript", "private": true, "dependencies": { "docx": "^9.0.0" } }

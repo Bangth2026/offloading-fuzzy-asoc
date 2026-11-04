@@ -1,0 +1,9 @@
+__pycache__/
+*.pkl
+results/*
+!results/.gitkeep
+manuscript/build/
+manuscript/figs/fig4_fuzzy.png
+manuscript/figs/fig5_fuzzy.png
+node_modules/
+data/
