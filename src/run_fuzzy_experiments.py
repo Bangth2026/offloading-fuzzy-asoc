@@ -37,9 +37,10 @@ N_DA, MAXLEN = 31, 200
 # ------------------------------------------------------------------ model
 class TinyTransformer(nn.Module):
     """2 layers, 2 heads, d=32, [ASSIGN] pooling token (Table 2 configuration)."""
-    def __init__(self, d=32, heads=2, layers=2, n_num=4):
+    def __init__(self, d=32, heads=2, layers=2, n_num=4, n_da=None):
         super().__init__()
-        self.emb = nn.Embedding(N_DA + 1, d - 8, padding_idx=N_DA)
+        n_da = N_DA if n_da is None else n_da
+        self.emb = nn.Embedding(n_da + 1, d - 8, padding_idx=n_da)   # padding index lies outside the label set
         self.num = nn.Linear(n_num, 8)
         self.cls = nn.Parameter(torch.zeros(1, 1, d))
         self.pos = nn.Embedding(MAXLEN + 1, d)
@@ -144,11 +145,21 @@ def holm(ps):
     return out
 
 
+def set_n_da(units):
+    """Number of specific dialogue-act labels is taken from the data (32 in the release:
+    the 31 schema categories plus a stray 'misc>error'), so padding never collides with a label."""
+    global N_DA
+    N_DA = max(int(np.max(u["da"])) for u in units) + 1
+    return N_DA
+
+
 def main(units, seeds=10, sweep_seeds=3, epochs=15, out_json="paper_stats_fuzzy.json", fig_dir="."):
+    n_da = set_n_da(units)
     y = np.array([u["y"] for u in units]); groups = np.array([u["group_key"] for u in units])
     ybin = (y >= np.quantile(y, 0.75)).astype(int)
     stats = {"N_units": len(units), "N_students": int(len(set(groups))),
-             "n_highrisk": int(ybin.sum()), "seeds": seeds, "epochs": epochs}
+             "n_highrisk": int(ybin.sum()), "seeds": seeds, "epochs": epochs,
+             "n_specific_da": n_da}
 
     # E1 accuracy, paired over seeds
     kinds = ["none", "linear_mse", "tsk_mse", "implication"]

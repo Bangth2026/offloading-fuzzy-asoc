@@ -81,7 +81,7 @@ Contextual Questions | 2,938 | Questions tied to the current assignment; negativ
 Provide Context | 3,028 | Student supplies code or error messages for the model to act on; often precedes delegation.
 Verification | 647 | Checking AI output; candidate protective factor.
 Editing | 418 | Refining AI output; active engagement rather than passive acceptance.
-Off Topic | 250 | Non-academic use; excluded from the risk model.
+Off Topic | 250 | Non-academic use; kept as a turn category but not used by any rule.
 Misc. | 35 | Residual category.
 !END
 !CAP Table 1. Broad dialogue-act categories and counts published for StudyChat [2], with our reading of each category's relevance to the rule inputs of Section 5.3.
@@ -117,7 +117,7 @@ Output: feature sequence X = (x_1..x_m)
 Category identifiers in Algorithm 2 are the lowercase, underscore-separated strings of the released llm_label field (Appendix A), not the display names of Table 1.
 
 ## 5.2 Sequential encoder
-Each turn is embedded by concatenating a learned embedding of its specific dialogue act (31 categories) with a linear projection of its scalar and binary features. The sequence is encoded by a Transformer encoder with 2 layers, 2 attention heads and model dimension 32, a size chosen for a corpus of a few hundred labelled sequences, with learned positional embeddings over turn index. A learned [ASSIGN] pooling token, analogous to the classification token of BERT-style encoders, attends over the sequence, and its final representation feeds a two-layer head with sigmoid output that produces the risk score r ∈ (0, 1).
+Each turn is embedded by concatenating a learned embedding of its specific dialogue act (the 31 schema categories plus one stray label, misc>error, that occurs in five turns of the release) with a linear projection of its scalar and binary features. The sequence is encoded by a Transformer encoder with 2 layers, 2 attention heads and model dimension 32, a size chosen for a corpus of a few hundred labelled sequences, with learned positional embeddings over turn index. A learned [ASSIGN] pooling token, analogous to the classification token of BERT-style encoders, attends over the sequence, and its final representation feeds a two-layer head with sigmoid output that produces the risk score r ∈ (0, 1).
 
 ## 5.3 Fuzzy behavioural rule base
 **Inputs and membership functions.** The rule base reads four unit-level rates from Algorithm 2: v (verbatim acceptance), u (surface dependency), p (provide-context share) and e (verification share). Each input x has two linguistic terms with ramp membership functions,

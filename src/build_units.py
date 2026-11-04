@@ -21,7 +21,7 @@ import pandas as pd
 WRITING, PROVIDE, CONTEXTUAL, CONCEPTUAL = ("writing_request", "provide_context",
                                             "contextual_questions", "conceptual_questions")
 EDIT_VERIFY = {"editing_request", "verification"}
-EXCLUDE = {"off_topic"}
+EXCLUDE: set = set()   # the published pipeline keeps off-topic turns (they are one of the 8 broad features)
 GROUPS = [("g1", ["a1", "a2"], "e1"), ("g2", ["a3", "a4"], "e2"), ("g3", ["a5", "a6", "a7"], "e3")]
 EXPECTED = {"students": 175, "units": 464, "highrisk": 116}
 
@@ -35,7 +35,7 @@ def weak_labels(scores: pd.DataFrame, max_points: dict, cols: dict) -> pd.DataFr
             vals = [s[cols[a]] for a in assigns]
             if any(pd.isna(v) for v in vals) or pd.isna(s[cols[exam]]):
                 continue
-            w = [max_points[sem][a] for a in assigns]
+            w = [max_points[sem][a.upper()] for a in assigns]
             llm = float(np.dot(vals, w) / np.sum(w))
             no_llm = float(s[cols[exam]])
             y = float(np.clip((llm - no_llm) / llm, 0, 1)) if llm > 0 else 0.0
@@ -44,17 +44,34 @@ def weak_labels(scores: pd.DataFrame, max_points: dict, cols: dict) -> pd.DataFr
 
 
 # ------------------------------------------------------------------ Algorithm 2
+def label_of(rec) -> str:
+    """llm_label is a dict {'label': 'broad>specific', 'justification': ...} in the release."""
+    lab = rec["llm_label"]
+    if isinstance(lab, dict):
+        return lab["label"].strip()
+    if isinstance(lab, str) and lab.lstrip().startswith("{"):
+        import ast
+        return ast.literal_eval(lab)["label"].strip()
+    return str(lab).strip()
+
+
+def ts_seconds(v) -> float:
+    s = str(v)
+    return float(s) / 1000.0 if s.isdigit() else pd.Timestamp(s).timestamp()
+
+
 def turn_features(turns: list[dict], specific_vocab: dict):
-    turns = sorted(turns, key=lambda d: (d["chatId"], d["interactionCount"]))
+    turns = sorted(turns, key=lambda d: (d["chatId"], int(d["interactionCount"])))
     feats, prev_ts, prev_chat, run = [], None, None, 0
     by_chat = defaultdict(list)
     for k, d in enumerate(turns):
         by_chat[d["chatId"]].append(k)
-    broad = [d["llm_label"].split(">")[0].strip() for d in turns]
+    labels = [label_of(d) for d in turns]
+    broad = [l.split(">")[0].strip() for l in labels]
     for k, d in enumerate(turns):
         b = broad[k]
-        spec = d["llm_label"].strip()
-        ts = pd.Timestamp(d["timestamp"]).timestamp()
+        spec = labels[k]
+        ts = ts_seconds(d["timestamp"])
         lat = ts - prev_ts if (prev_chat == d["chatId"] and prev_ts is not None) else 0.0
         later = [j for j in by_chat[d["chatId"]] if j > k]
         earlier = [j for j in by_chat[d["chatId"]] if j < k]
@@ -107,7 +124,7 @@ def main():
         with open(os.path.join(a.data, fn), encoding="utf8") as fh:
             for line in fh:
                 r = json.loads(line)
-                if r["llm_label"].split(">")[0].strip() in EXCLUDE:
+                if label_of(r).split(">")[0].strip() in EXCLUDE:
                     continue
                 asg = assignment_of(r, cfg["assignment_pattern"])
                 if asg is None:

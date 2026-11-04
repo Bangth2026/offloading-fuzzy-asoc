@@ -1,12 +1,45 @@
 {
-  "_note": "Fill max_points from scores/README.md of the StudyChat v1.1 release, and check column names against the score CSV header.",
-  "score_files": {"f24": "scores/f24_grades_released_normalized.csv", "s25": "scores/s25_grades_released_normalized.csv"},
-  "dialogue_files": {"f24": "dialogues/f24_labeled_dialogues.jsonl", "s25": "dialogues/s25_labeled_dialogues.jsonl"},
-  "score_columns": {"userId": "userId", "a1": "a1", "a2": "a2", "a3": "a3", "a4": "a4", "a5": "a5", "a6": "a6", "a7": "a7",
-                    "e1": "exam1", "e2": "exam2", "e3": "final"},
-  "assignment_pattern": "\\ba(?:ssignment)?\\s*_?(\\d)\\b",
+  "_note": "max_points transcribed from scores/README.md of the StudyChat v1.1 release (F24/S25 Max Points).",
+  "score_files": {
+    "f24": "scores/f24_grades_released_normalized.csv",
+    "s25": "scores/s25_grades_released_normalized.csv"
+  },
+  "dialogue_files": {
+    "f24": "dialogues/f24_labeled_dialogues.jsonl",
+    "s25": "dialogues/s25_labeled_dialogues.jsonl"
+  },
+  "score_columns": {
+    "userId": "userId",
+    "a1": "a1",
+    "a2": "a2",
+    "a3": "a3",
+    "a4": "a4",
+    "a5": "a5",
+    "a6": "a6",
+    "a7": "a7",
+    "e1": "e1",
+    "e2": "e2",
+    "e3": "e3"
+  },
+  "assignment_pattern": "^a(\\d)$",
   "max_points": {
-    "f24": {"a1": null, "a2": null, "a3": null, "a4": null, "a5": null, "a6": null, "a7": null},
-    "s25": {"a1": null, "a2": null, "a3": null, "a4": null, "a5": null, "a6": null, "a7": null}
+    "f24": {
+      "A1": 30,
+      "A2": 100,
+      "A3": 55,
+      "A4": 61,
+      "A5": 65,
+      "A6": 113,
+      "A7": 101
+    },
+    "s25": {
+      "A1": 31,
+      "A2": 100,
+      "A3": 55,
+      "A4": 90,
+      "A5": 105,
+      "A6": 113,
+      "A7": 135
+    }
   }
 }

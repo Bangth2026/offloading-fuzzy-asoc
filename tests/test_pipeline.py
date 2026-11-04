@@ -23,7 +23,7 @@ def test_implication_loss_zero_when_satisfied():
 
 
 def test_turn_features_rules():
-    t = lambda c, i, lab: dict(chatId=c, interactionCount=i, timestamp=f"2024-10-01T10:0{i}:00", llm_label=lab)
+    t = lambda c, i, lab: dict(chatId=c, interactionCount=i, timestamp=str(1729128916365 + 60000 * i), llm_label={"label": lab, "justification": ""})
     turns = [t("c", 0, "provide_context>x"), t("c", 1, "writing_request>y"),
              t("c", 2, "contextual_questions>z"), t("c", 3, "contextual_questions>z"),
              t("c", 4, "contextual_questions>z")]
