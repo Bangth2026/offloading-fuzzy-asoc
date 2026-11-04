@@ -1,0 +1,4 @@
+primary ['writing_request', 'contextual_questions', 'off_topic'] same as pooled: False | cf 0.647 lr8 0.581 | H1 [0.06556002682763251, [-0.0012109724444185337, 0.13040486803028364]] True | H2 [0.5631417139269296, 0.72964858120845] True
+   drops {'conceptual_questions': -0.006, 'writing_request': 0.132, 'provide_context': -0.013, 'contextual_questions': 0.009, 'verification': -0.039, 'editing_request': -0.009, 'off_topic': 0.0, 'misc': -0.013}
+reverse ['writing_request', 'conceptual_questions', 'provide_context'] same as pooled: True | cf 0.642 lr8 0.58 | H1 [0.061594202898550665, [-0.03291121050528003, 0.15190880719847016]] True | H2 [0.5317366756151003, 0.7485255440597167] True
+   drops {'conceptual_questions': 0.031, 'writing_request': 0.046, 'provide_context': 0.006, 'contextual_questions': -0.01, 'verification': -0.009, 'editing_request': -0.002, 'off_topic': -0.002, 'misc': -0.005}

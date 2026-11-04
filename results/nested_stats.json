@@ -1,0 +1,311 @@
+{
+ "primary": {
+  "train": "f24",
+  "test": "s25",
+  "threshold_y": 0.17054347826086963,
+  "train_cv_auc_lr8": 0.5658932879239393,
+  "drops": {
+   "conceptual_questions": -0.005982687668511288,
+   "writing_request": 0.13165176670923817,
+   "provide_context": -0.012967220093656806,
+   "contextual_questions": 0.008698737051227479,
+   "verification": -0.039318859088974034,
+   "editing_request": -0.008920107847310899,
+   "off_topic": 0.00010217113665400568,
+   "misc": -0.012567049808428932
+  },
+  "ranking": [
+   "writing_request",
+   "contextual_questions",
+   "off_topic",
+   "conceptual_questions",
+   "editing_request",
+   "misc",
+   "provide_context",
+   "verification"
+  ],
+  "selected": [
+   "writing_request",
+   "contextual_questions",
+   "off_topic"
+  ],
+  "same_as_pooled": false,
+  "auc_cf_nested": 0.6469818913480885,
+  "auc_lr8": 0.581421864520456,
+  "H1_diff": [
+   0.06556002682763251,
+   [
+    -0.0012109724444185337,
+    0.13040486803028364
+   ]
+  ],
+  "H2_ci": [
+   0.5631417139269296,
+   0.72964858120845
+  ],
+  "consequents": [
+   {
+    "rule": "writing_request LOW and contextual_questions LOW and off_topic LOW",
+    "z": 0.36187452058643316
+   },
+   {
+    "rule": "writing_request LOW and contextual_questions LOW and off_topic HIGH",
+    "z": 0.33217438843055674
+   },
+   {
+    "rule": "writing_request LOW and contextual_questions HIGH and off_topic LOW",
+    "z": 0.41347698196952604
+   },
+   {
+    "rule": "writing_request LOW and contextual_questions HIGH and off_topic HIGH",
+    "z": 0.2319693384572465
+   },
+   {
+    "rule": "writing_request HIGH and contextual_questions LOW and off_topic LOW",
+    "z": 1.0177265470202317e-17
+   },
+   {
+    "rule": "writing_request HIGH and contextual_questions LOW and off_topic HIGH",
+    "z": 0.10397730232653003
+   },
+   {
+    "rule": "writing_request HIGH and contextual_questions HIGH and off_topic LOW",
+    "z": 0.1453725203317843
+   },
+   {
+    "rule": "writing_request HIGH and contextual_questions HIGH and off_topic HIGH",
+    "z": 0.15947926374380395
+   }
+  ],
+  "frozen": {
+   "inputs_log1p_counts_of": [
+    "writing_request",
+    "contextual_questions",
+    "off_topic"
+   ],
+   "breakpoint_low": [
+    1.0986122886681098,
+    0.0,
+    0.0
+   ],
+   "breakpoint_high": [
+    2.5249280036247685,
+    2.0794415416798357,
+    0.001
+   ],
+   "rules_terms_in_input_order": [
+    [
+     "LOW",
+     "LOW",
+     "LOW"
+    ],
+    [
+     "LOW",
+     "LOW",
+     "HIGH"
+    ],
+    [
+     "LOW",
+     "HIGH",
+     "LOW"
+    ],
+    [
+     "LOW",
+     "HIGH",
+     "HIGH"
+    ],
+    [
+     "HIGH",
+     "LOW",
+     "LOW"
+    ],
+    [
+     "HIGH",
+     "LOW",
+     "HIGH"
+    ],
+    [
+     "HIGH",
+     "HIGH",
+     "LOW"
+    ],
+    [
+     "HIGH",
+     "HIGH",
+     "HIGH"
+    ]
+   ],
+   "consequents": [
+    0.36187452058643316,
+    0.33217438843055674,
+    0.41347698196952604,
+    0.2319693384572465,
+    1.0177265470202317e-17,
+    0.10397730232653003,
+    0.1453725203317843,
+    0.15947926374380395
+   ],
+   "background_weight": 0.05,
+   "background_output": 0.5,
+   "label_threshold_y": 0.17054347826086963,
+   "trained_on": "f24"
+  },
+  "H1_noninferior": true,
+  "H2_transfer": true
+ },
+ "reverse": {
+  "train": "s25",
+  "test": "f24",
+  "threshold_y": 0.1718475073313782,
+  "train_cv_auc_lr8": 0.6689065143051856,
+  "drops": {
+   "conceptual_questions": 0.030555007930423317,
+   "writing_request": 0.04600217427459974,
+   "provide_context": 0.005730714468256237,
+   "contextual_questions": -0.009750404634125243,
+   "verification": -0.00940422442083555,
+   "editing_request": -0.0016298135235011113,
+   "off_topic": -0.0016330992742951134,
+   "misc": -0.00472073146491736
+  },
+  "ranking": [
+   "writing_request",
+   "conceptual_questions",
+   "provide_context",
+   "editing_request",
+   "off_topic",
+   "misc",
+   "verification",
+   "contextual_questions"
+  ],
+  "selected": [
+   "writing_request",
+   "conceptual_questions",
+   "provide_context"
+  ],
+  "same_as_pooled": true,
+  "auc_cf_nested": 0.6420289855072464,
+  "auc_lr8": 0.5804347826086957,
+  "H1_diff": [
+   0.061594202898550665,
+   [
+    -0.03291121050528003,
+    0.15190880719847016
+   ]
+  ],
+  "H2_ci": [
+   0.5317366756151003,
+   0.7485255440597167
+  ],
+  "consequents": [
+   {
+    "rule": "writing_request LOW and conceptual_questions LOW and provide_context LOW",
+    "z": 0.4160396230420057
+   },
+   {
+    "rule": "writing_request LOW and conceptual_questions LOW and provide_context HIGH",
+    "z": 0.5312239007156907
+   },
+   {
+    "rule": "writing_request LOW and conceptual_questions HIGH and provide_context LOW",
+    "z": 0.265640629671519
+   },
+   {
+    "rule": "writing_request LOW and conceptual_questions HIGH and provide_context HIGH",
+    "z": 0.2571660605294002
+   },
+   {
+    "rule": "writing_request HIGH and conceptual_questions LOW and provide_context LOW",
+    "z": 0.17384073002617198
+   },
+   {
+    "rule": "writing_request HIGH and conceptual_questions LOW and provide_context HIGH",
+    "z": 0.016464370874996796
+   },
+   {
+    "rule": "writing_request HIGH and conceptual_questions HIGH and provide_context LOW",
+    "z": 3.901254101267207e-09
+   },
+   {
+    "rule": "writing_request HIGH and conceptual_questions HIGH and provide_context HIGH",
+    "z": 0.12742407394938773
+   }
+  ],
+  "frozen": {
+   "inputs_log1p_counts_of": [
+    "writing_request",
+    "conceptual_questions",
+    "provide_context"
+   ],
+   "breakpoint_low": [
+    1.0986122886681098,
+    0.0,
+    0.0
+   ],
+   "breakpoint_high": [
+    2.70805020110221,
+    2.6390573296152584,
+    2.1972245773362196
+   ],
+   "rules_terms_in_input_order": [
+    [
+     "LOW",
+     "LOW",
+     "LOW"
+    ],
+    [
+     "LOW",
+     "LOW",
+     "HIGH"
+    ],
+    [
+     "LOW",
+     "HIGH",
+     "LOW"
+    ],
+    [
+     "LOW",
+     "HIGH",
+     "HIGH"
+    ],
+    [
+     "HIGH",
+     "LOW",
+     "LOW"
+    ],
+    [
+     "HIGH",
+     "LOW",
+     "HIGH"
+    ],
+    [
+     "HIGH",
+     "HIGH",
+     "LOW"
+    ],
+    [
+     "HIGH",
+     "HIGH",
+     "HIGH"
+    ]
+   ],
+   "consequents": [
+    0.4160396230420057,
+    0.5312239007156907,
+    0.265640629671519,
+    0.2571660605294002,
+    0.17384073002617198,
+    0.016464370874996796,
+    3.901254101267207e-09,
+    0.12742407394938773
+   ],
+   "background_weight": 0.05,
+   "background_output": 0.5,
+   "label_threshold_y": 0.1718475073313782,
+   "trained_on": "s25"
+  },
+  "H1_noninferior": true,
+  "H2_transfer": true
+ },
+ "ci_level": 97.5
+}

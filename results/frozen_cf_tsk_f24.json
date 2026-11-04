@@ -1,0 +1,73 @@
+{
+ "inputs_log1p_counts_of": [
+  "writing_request",
+  "contextual_questions",
+  "off_topic"
+ ],
+ "breakpoint_low": [
+  1.0986122886681098,
+  0.0,
+  0.0
+ ],
+ "breakpoint_high": [
+  2.5249280036247685,
+  2.0794415416798357,
+  0.001
+ ],
+ "rules_terms_in_input_order": [
+  [
+   "LOW",
+   "LOW",
+   "LOW"
+  ],
+  [
+   "LOW",
+   "LOW",
+   "HIGH"
+  ],
+  [
+   "LOW",
+   "HIGH",
+   "LOW"
+  ],
+  [
+   "LOW",
+   "HIGH",
+   "HIGH"
+  ],
+  [
+   "HIGH",
+   "LOW",
+   "LOW"
+  ],
+  [
+   "HIGH",
+   "LOW",
+   "HIGH"
+  ],
+  [
+   "HIGH",
+   "HIGH",
+   "LOW"
+  ],
+  [
+   "HIGH",
+   "HIGH",
+   "HIGH"
+  ]
+ ],
+ "consequents": [
+  0.36187452058643316,
+  0.33217438843055674,
+  0.41347698196952604,
+  0.2319693384572465,
+  1.0177265470202317e-17,
+  0.10397730232653003,
+  0.1453725203317843,
+  0.15947926374380395
+ ],
+ "background_weight": 0.05,
+ "background_output": 0.5,
+ "label_threshold_y": 0.17054347826086963,
+ "trained_on": "f24"
+}

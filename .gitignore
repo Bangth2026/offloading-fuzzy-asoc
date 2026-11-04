@@ -11,6 +11,14 @@ results/*
 !results/transfer_stats.json
 !results/transfer_log.txt
 !results/fig7_transfer.png
+!results/nested_stats.json
+!results/nested_log.txt
+!results/frozen_cf_tsk_f24.json
+!results/benchmark_stats.json
+!results/benchmark_log.txt
+!results/fig3_benchmark.png
+!results/fig4_ablation_permutation.png
+!results/seq_seeds.json
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png
