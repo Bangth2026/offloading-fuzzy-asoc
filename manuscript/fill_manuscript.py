@@ -162,6 +162,10 @@ def build_context(st, repo_url, doi):
         lo, hi = o["H2_ci"]; S[f"{tag}_h2"] = {"lo": f3(lo), "hi": f3(hi)}
         S[f"{tag}_H1"], S[f"{tag}_H2"] = o["H1_noninferior"], o["H2_transfer"]
         S[f"{tag}_wdrop"] = f3(o["drops"]["writing_request"])
+    for tag, key in (("lp", "primary"), ("lr", "reverse")):
+        o = st["E12_lstm"][key]
+        S[tag] = {"m0": f3(o["mean_lstm"]), "s0": f3(o["sd_lstm"]), "m1": f3(o["mean_lstm_cf"]), "s1": f3(o["sd_lstm_cf"]),
+                  "d": f3(o["mean_diff"]), "npos": o["n_pos"], "p": fp(o["wilcoxon_p"]), "H5": o["H5"], "pos": o["mean_diff"] > 0}
     S["today"] = datetime.date.today().strftime("%d %B %Y")
     return S
 

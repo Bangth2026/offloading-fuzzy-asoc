@@ -19,6 +19,9 @@ results/*
 !results/fig3_benchmark.png
 !results/fig4_ablation_permutation.png
 !results/seq_seeds.json
+!results/lstm_transfer_stats.json
+!results/lstm_transfer_log.txt
+!results/seq_seeds_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png

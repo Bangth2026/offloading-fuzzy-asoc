@@ -1,8 +1,8 @@
-# Fuzzy rule-constrained detection of cognitive offloading in student–LLM dialogues
+# Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues
 
-Code accompanying the manuscript *Fuzzy Rule-Constrained Sequential Learning for Detecting Cognitive Offloading in Student–Large Language Model Tutoring Dialogues* (H. B. Truong, submitted to *Applied Soft Computing*).
+Code accompanying the manuscript *Expert versus Data-Learned Fuzzy Rules for Cognitive-Offloading Risk in Student–LLM Tutoring Dialogues: A Cross-Semester Evaluation* (H. B. Truong, submitted to *Applied Soft Computing*).
 
-A Transformer encoder scores cognitive-offloading risk from turn-level student–ChatGPT dialogue. A five-rule zero-order Takagi–Sugeno–Kang (TSK) fuzzy rule base, with membership breakpoints fitted on each training fold, constrains training through a Łukasiewicz implication loss and supplies the explanation attached to each score.
+The study compares an expert five-rule Takagi–Sugeno–Kang (TSK) rule base, used as a standalone score and as a Łukasiewicz implication constraint on sequence encoders, with CF-TSK, an eight-rule grid over dialogue-act volumes whose consequents are learned on training data. CF-TSK is tested across the two StudyChat semesters under analysis plans committed before each run (`PREREG_*.md`; the commit order is in `git-history.bundle` or the repository history). `results/frozen_cf_tsk_f24.json` holds the Fall 2024 model for scoring new cohorts without refitting.
 
 ## Layout
 
@@ -44,6 +44,8 @@ python src/run_nested.py --units results/units.pkl --stats results/paper_stats_f
 #    benchmark, ablation, permutation, complementarity (Table 3, Sections 7.2, 7.5, 7.7)
 python src/reproduce_benchmark.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
 python src/seq_seeds.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
+#    E12 LSTM encoder with the E11 rule base, cross-semester (plan in PREREG_E12.md)
+python src/run_lstm_transfer.py --units results/units.pkl --stats results/paper_stats_fuzzy.json
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \

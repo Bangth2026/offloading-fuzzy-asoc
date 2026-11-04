@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "Fuzzy rule-constrained detection of cognitive offloading in student–LLM dialogues"
+title: "Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues"
 version: 1.0.0
 date-released: 2026-11-04
 license: MIT
@@ -9,7 +9,7 @@ authors:
     given-names: Hai Bang
     orcid: "https://orcid.org/0000-0001-5094-3128"
     affiliation: "Saigon International University, Ho Chi Minh City, Vietnam"
-keywords: [cognitive offloading, fuzzy rule base, Takagi-Sugeno-Kang, neuro-fuzzy, differentiable fuzzy logic, learning analytics]
+keywords: [cognitive offloading, Takagi-Sugeno-Kang, learned consequents, neuro-fuzzy, cross-cohort validation, learning analytics]
 references:
   - type: dataset
     title: "StudyChat"

@@ -63,6 +63,8 @@ def test_end_to_end_fill(tmp_path=None):
                   "--frozen", os.path.join(tmp, "fr.json")],
                  ["reproduce_benchmark.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "b.json"),
                   "--figdir", tmp, "--perms", "3", "--epochs", "1"],
+                 ["run_lstm_transfer.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "l.json"),
+                  "--seeds", "2", "--epochs", "1"],
                  ["seq_seeds.py", "--units", os.path.join(tmp, "units2.pkl"), "--out", os.path.join(tmp, "q.json"),
                   "--seeds", "2", "--epochs", "1"]):
         subprocess.run([sys.executable, os.path.join(ROOT, "src", args[0])] + args[1:] + ["--stats", os.path.join(tmp, "stats.json")],
