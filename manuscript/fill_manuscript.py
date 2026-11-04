@@ -3,7 +3,7 @@ fill_manuscript.py -- render the ASOC manuscript and cover letter from real resu
 
     python manuscript/fill_manuscript.py \
         --stats results/paper_stats_fuzzy.json \
-        --repo-url https://github.com/<owner>/<repo> --doi 10.5281/zenodo.<id>
+        --repo-url https://github.com/Bangth2026/offloading-fuzzy-asoc --doi 10.5281/zenodo.<id>
 
 Every number in Sections 7.3-7.7, the abstract, discussion and conclusion is
 read from the statistics file written by src/run_fuzzy_experiments.py, and every

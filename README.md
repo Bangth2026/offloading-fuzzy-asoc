@@ -56,7 +56,7 @@ python src/run_lstm_transfer.py --units results/units.pkl --stats results/paper_
 
 # 3. manuscript and cover letter (.docx) from the statistics file
 python manuscript/fill_manuscript.py --stats results/paper_stats_fuzzy.json \
-       --repo-url https://github.com/<owner>/<repo> --doi 10.5281/zenodo.<id>
+       --repo-url https://github.com/Bangth2026/offloading-fuzzy-asoc --doi 10.5281/zenodo.<id>
 #    both flags are optional; without them the availability statement says the
 #    archive is supplied with the submission and the DOI follows before publication
 ```
