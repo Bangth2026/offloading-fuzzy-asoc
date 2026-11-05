@@ -33,7 +33,9 @@ Seven planned tests used Spring 2025 as the held-out semester: E10 H1 (CF-TSK no
 
 One step of the audit had to be corrected. A first attempt to remove group effects thresholded the label within each semester × group cell. In Fall 2024 group 2 the cell's 75th percentile is zero, so that rule marks every unit of the cell positive and reintroduces the group effect (results/revision_b_stats.json, key two_by_two). The within-group conclusions of the paper rest only on rank correlations with the continuous y.
 
-# S2. Register of analyses
+# S2. Register of analyses and planned decisions
+Studies 2 and 3 had planned decision rules at Bonferroni level 98.33%: TutorTrace D1 → D2, transfer {{S.ta.H1.e}} ({{S.ta.H1.lo}} to {{S.ta.H1.hi}}), gain over structure {{S.ta.H2.e}} ({{S.ta.H2.lo}} to {{S.ta.H2.hi}}), difference from the all-feature regression {{S.ta.H3.e}} ({{S.ta.H3.lo}} to {{S.ta.H3.hi}}, margin −0.05); RECIPE4U SW → AW + IRW, {{S.r1.H1.e}} ({{S.r1.H1.lo}} to {{S.r1.H1.hi}}), {{S.r1.H2.e}} ({{S.r1.H2.lo}} to {{S.r1.H2.hi}}) and {{S.r1.H3.e}} ({{S.r1.H3.lo}} to {{S.r1.H3.hi}}). E10 used 98.75% for its four hypotheses. The main paper uses the single 95% rule of its Table 1 instead.
+
 !TABLE
 Analysis | Question | Plan committed (UTC) | Result committed | Plan on public host before the run
 E1–E6 | Author-specified rules as score and constraint; direction check | Rules in code | 4 Nov 06:07 (202374a) | No
@@ -46,6 +48,8 @@ Study 2 | SC-TSK on TutorTrace | 08:27 (be03ee2) | 08:44 (078a270) | Plan on hos
 Study 3 | SC-TSK on RECIPE4U | 09:15 (068f0d9) | 09:27 (e4f7282) | Yes (push log)
 R2 | Internal pre-submission review, round 1 | 5 Nov 03:21 (ac28087) | later commits | Yes (push log)
 R3 | Internal pre-submission review, round 2 | 5 Nov 04:28 (0f7c2ee) | later commits | Yes (push log)
+R4 | Internal pre-submission review, round 3 | 5 Nov 06:52 (0ac9ca0) | ce42eff | Yes (push log)
+R5 | Internal pre-submission review, round 4; decision rule of Table 1 | 5 Nov 07:55 (a01be76) | 51d9e65 | Yes (push log)
 !END
 !CAP Table S2. Commits of every plan and result. The GitHub repository was created at 07:34 UTC on 4 November 2026.
 
@@ -122,3 +126,33 @@ Confound | β | Requests | Naive | Check 1 | Check 2: structure | Check 2: persi
 {% for k, o in S.syn4.items() %}{{ {'A':'Structure','B':'Propensity','C':'Persistence'}[o.confound] }} | {{o.beta}} | {{o.requests}} | {{o.naive}} | {{o.check1}} | {{o.check2_structure}} | {{o.check2_persistence}} | {{o.check2_propensity}} | {{o.all_checks}}
 {% endfor %}!END
 !CAP Table S9. Simulation with a within-student effect β added to each confound. A noise input passes the split-half filter in {{S.syn4_noise_split}}% and the within-student filter in {{S.syn4_noise_within}}% of replications.
+
+# S6. Revision analyses R5 in detail (decision rule of the main paper)
+All analyses in this section follow plan PREREG_R5.md and are exploratory. On RECIPE4U SW → AW + IRW the code ordered requests by session before construction, which changed the random split of students; the sign filter then selected {{S.r5.S3_SW_to_AW_IRW.sel|join(', ')}} instead of the planned set.
+
+!TABLE
+Split | Input | Within-student ρ | Bonferroni interval | Outcome
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{% for i, v in S.r5[sp].c1in.items() %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{i}} | {{v.r}} | [{{v.lo}}, {{v.hi}}] at {{S.r5[sp].c1lvl}}% | {{v.st}}
+{% endfor %}{% endfor %}!END
+!CAP Table S10. Check 1 with Bonferroni intervals on the training cohort.
+
+!TABLE
+Split | Model | AUC | Gain over b_all | Gain over structure | Gain over persistence | Gain over propensity | Verdict
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{% for m, lab in [('sc','SC-TSK'),('sm','SM-TSK'),('furia3','FURIA, 3 inputs'),('furia_all','FURIA, all')] %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{lab}}{% if S.r5[sp][m].rules is defined %} ({{S.r5[sp][m].rules}} rules){% endif %} | {{S.r5[sp][m].auc.e}} | {{S.r5[sp][m].gain.e}} [{{S.r5[sp][m].gain.lo}}, {{S.r5[sp][m].gain.hi}}] | {{S.r5[sp][m].each.structure.e}} | {{S.r5[sp][m].each.persistence.e}} | {{S.r5[sp][m].each.propensity.e}} | {{S.r5[sp][m].v}}
+{% endfor %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | RF-TSK | {{S.r5[sp].rf.auc.e}} | {{S.r5[sp].rf.gain.e}} [{{S.r5[sp].rf.gain.lo}}, {{S.r5[sp].rf.gain.hi}}] | — | — | — | {{S.r5[sp].rf.v}}
+{% endfor %}!END
+!CAP Table S11. Incremental Check 2 and verdicts. Gains over single baselines are incremental (baseline plus model versus baseline).
+
+**Study 2 without first queries.** D1 → D2: {{S.r5.S2_D1_to_D2.nf.n}} queries; SC-TSK {{S.r5.S2_D1_to_D2.nf.sc.e}}, persistence {{S.r5.S2_D1_to_D2.nf.pers.e}}, propensity {{S.r5.S2_D1_to_D2.nf.prop.e}}; SC-TSK minus persistence {{S.r5.S2_D1_to_D2.nf.dpers.e}} ({{S.r5.S2_D1_to_D2.nf.dpers.lo}} to {{S.r5.S2_D1_to_D2.nf.dpers.hi}}), minus propensity {{S.r5.S2_D1_to_D2.nf.dprop.e}} ({{S.r5.S2_D1_to_D2.nf.dprop.lo}} to {{S.r5.S2_D1_to_D2.nf.dprop.hi}}). D2 → D1: {{S.r5.S2_D2_to_D1.nf.n}} queries; {{S.r5.S2_D2_to_D1.nf.sc.e}}, {{S.r5.S2_D2_to_D1.nf.pers.e}}, {{S.r5.S2_D2_to_D1.nf.prop.e}}. D1+D2 → D3: {{S.r5.S2_D12_to_D3.nf.n}} queries; {{S.r5.S2_D12_to_D3.nf.sc.e}}, {{S.r5.S2_D12_to_D3.nf.pers.e}}, {{S.r5.S2_D12_to_D3.nf.prop.e}}.
+
+**SM-TSK consequents with 95% student-cluster bootstrap intervals (500 resamples).** D1 (rows code growth LOW, HIGH; columns insertions/duration LL, LH, HL, HH): {% for j in range(8) %}{{S.r4.S2_D1_to_D2.smz[j]}} [{{S.r5.S2_D1_to_D2.smci.lo[j]}}, {{S.r5.S2_D1_to_D2.smci.hi[j]}}]{% if not loop.last %}; {% endif %}{% endfor %}. SW, for the rule base of this section ({{S.r5.S3_SW_to_AW_IRW.sel|join(', ')}}): intervals {% for j in range(8) %}[{{S.r5.S3_SW_to_AW_IRW.smci.lo[j]}}, {{S.r5.S3_SW_to_AW_IRW.smci.hi[j]}}]{% if not loop.last %}; {% endif %}{% endfor %}.
+
+**Study 1 with the residualised label.** {% for k, o in S.r5.s1.items() %}{{k.replace('_to_', ' → ')}}: CF-TSK {{o.cf_tsk.e}} ({{o.cf_tsk.lo}} to {{o.cf_tsk.hi}}), LR8 {{o.lr8.e}} ({{o.lr8.lo}} to {{o.lr8.hi}}), group only {{o.group_only.e}} ({{o.group_only.lo}} to {{o.group_only.hi}}). {% endfor %}
+
+**Simulation (R5-E).** Percentages of 100 replications.
+
+!TABLE
+Confound | β | Requests | Departure | Behavioural | Not behavioural | Inconclusive | Check 1 supported | Check 2 pass | Fixed effects behavioural | AUC SC / SM / SM reversed
+{% for k, o in S.syn5.items() %}{{ {'A':'Structure','B':'Propensity','C':'Persistence','AB':'Structure + propensity'}[o.confound] }} | {{o.beta}} | {{o.requests}} | {{o.violation}} | {{o.behavioural}} | {{o.not_behavioural}} | {{o.inconclusive}} | {{o.c1_supported}} | {{o.c2_pass}} | {{o.fe_behavioural}} | {{o.auc_sc}} / {{o.auc_sm}} / {{o.auc_sm_reversed}}
+{% endfor %}!END
+!CAP Table S12. Simulation under the decision rule of the main paper.

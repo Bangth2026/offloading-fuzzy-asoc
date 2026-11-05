@@ -1,70 +1,71 @@
-!TITLE Response to the third internal review of "Check the Premises Before Imposing the Rules"
+!TITLE Response to the fourth round of internal review (two reports)
 !CENTER Hai Bang Truong · {{S.today}}
 
-New analyses for this round were written into PREREG_R4.md and pushed to GitHub at 06:52 UTC on 5 November 2026 (commit 0ac9ca0), before the analysis code (commit 170db36, tested on label-shuffled data and two-replication simulations) touched the real data. Each analysis was run once; the results are in results/r4_stats.json and results/r4_synthetic.json. The plan also fixed the verdict rule asked for in M1 before any result was seen. Section, table and figure numbers refer to the revised manuscript.
+This round answers two reports: report A (major revision, M1–M8, minors 1–13) and report B (minor to moderate revision, comments 1–10 and minors). The new analyses were written into PREREG_R5.md and pushed to GitHub at 07:55 UTC on 5 November 2026 (commit a01be76), before the code (commit 42161fc, tested on label-shuffled data and two-replication simulations) touched the real data. The plan also fixed the decision rule now given in Table 1. Each analysis was run once; the results are in results/r5_stats.json and results/r5_synthetic.json.
 
-# Answers to the reviewer's questions
-1. Under line 13 of Algorithm 1, Study 2's rule base is not behavioural. Its inputs pass Check 1, but the rule base fails Check 2 in every deployment.
-2. A pure-noise input passes the split-half filter in {{S.syn4_noise_split}}% of simulated replications, close to the one half expected by chance. Section 3.3 now calls the filter a stability filter, not Check 1.
-3. Yes. The SM-TSK table has two levels: {{S.r4.S2_D1_to_D2.smz[0]}}, and {{S.r4.S2_D1_to_D2.smz[7]}} after high code growth and a long pre-query interval. It no longer contains the rise from {{S.ta.z[0]}} to {{S.ta.z[1]}} with duration that the SC-TSK table showed. The text now describes the SM-TSK table.
-4. No. A three-term TSK (27 rules) and monotone gradient boosting change AUC by a few hundredths, and no variant passes Check 2 against all baselines in any split (Section 8, Table S7).
-5. Not yet. The maintainers have not answered the licence issue, and the submission will wait for their reply.
+One change of conclusion follows from the reviewers' request for an incremental Check 2 (A-M2). Under the new decision rule the TutorTrace rule base passes all three checks from D1 to D2 (gain over the combined baseline {{S.r5.S2_D1_to_D2.sc.gain.e}}, 95% CI {{S.r5.S2_D1_to_D2.sc.gain.lo}} to {{S.r5.S2_D1_to_D2.sc.gain.hi}}), and the other verdicts are inconclusive. The abstract, highlights, Discussion and Conclusion no longer say that no rule base passes; they report this verdict, its fragility, and that the rule was fixed after earlier versions of the audit had been applied to the same data (Section 10).
 
-# Major comments
+# Report A
 
-**M1. Conclusions and the decision rule.** We adopted option (b), and the verdict rule now reports each check separately (Algorithm 1, line 13). A rule base is called behavioural only if all three checks pass. Sections 5.2 and 6.2 now end with an "Audit verdict" paragraph. For Study 2: Check 1 passes, Check 2 fails (on D2 it passes against structure, gain {{S.r4.S2_D1_to_D2.sc_gaps.structure.e}}, CI {{S.r4.S2_D1_to_D2.sc_gaps.structure.lo}} to {{S.r4.S2_D1_to_D2.sc_gaps.structure.hi}}, but not against persistence or propensity), and the rule base is not behavioural. The abstract, highlight 4, the Discussion and the Conclusion now say this, and the Conclusion states that no rule base passes all three checks. The simulation uses the same rule. Section 7 now reads Study 2 as "compatible with a weak behavioural effect that the data cannot confirm" rather than as the true-effect scenario.
+**M1. Check 3 inconsistent.** Plan provenance is now separate from Check 3. Check 3 is the statistical transfer criterion, and provenance is reported beside the verdict (Algorithm 1, line 11; Section 3.2). Figure 1, Sections 5.2 and 9 and Table 6 follow this definition.
 
-**M2. The split-half check is not Check 1.** We agree. Section 3.3, the caption of Algorithm 2 and the contribution list now call it a stability filter on the pooled direction, and say that Check 1 is applied after construction. The second highlight no longer claims the audit is built into construction. We also implemented a within-student version, SCw-TSK. In Study 2 it admits {{S.r4.S2_D1_to_D2.scw.nelig}}, {{S.r4.S2_D2_to_D1.scw.nelig}} and {{S.r4.S2_D12_to_D3.scw.nelig}} candidates and selects the same three inputs in every split. In Study 3 it selects different inputs, and neither direction beats persistence. In the simulation a noise input passes it in {{S.syn4_noise_within}}% of replications, so neither filter replaces Check 1.
+**M2. Check 2 not incremental.**
+- Check 2 is now the gain of b_all + f over b_all, where b_all combines structure, persistence and propensity in one logistic regression (Table 1).
+- Incremental gains over each baseline alone are secondary (Table S11).
+- The simulation was rerun under this definition. Under persistence the audit now detects β = 1 in {{S.syn5['C_1.0_3-5_none'].behavioural}}% and {{S.syn5['C_1.0_6-10_none'].behavioural}}% of replications with 3–5 and 6–10 requests, and power rises with session length.
+- The conclusions for Study 2 changed, as described above.
 
-**M3. Rule tables that contradict the selected directions.** Figures 3b and 4b now show SM-TSK tables, labelled as relative scores. The unconstrained consequents are in Supplementary S5. Section 5.2 lists all five SC-TSK violations as the reviewer counted them and states that the duration pair {{S.ta.z[0]}} → {{S.ta.z[1]}} involves well-supported cells. The Study 3 description no longer reports the {{S.r1.z[4]}} cell as a finding: the SM-TSK cells resting on {{S.sup3[4]}} and {{S.sup3[5]}} requests are described as extrapolated.
+**M3. Positive control and competitor.**
+- A student fixed-effects model is now the reference in every simulated condition (Figure 5). It has similar false-positive rates and more power in short sessions, and Section 9 says so.
+- Eight departures from the base design are tested (Table 7): non-monotone and threshold effects, 15% label noise, measurement error, three sessions per student, a correlated non-causal candidate, 20% missing requests and a time-varying effect.
+- The audit holds up except for the non-monotone effect, where both it and the fixed-effects model fail.
+- We know of no real dataset with an established behavioural antecedent for these targets. In that sense the D1 → D2 verdict is the closest thing to a positive case, and we present it as fragile.
 
-**M4. Contribution.**
-- The contribution list now says plainly that the audit's ingredients are established practice [19,20,37]. It names what is specific to fuzzy rule bases: rule support, consequent sign violations, output monotonicity on test data, and SM-TSK with Proposition 1. It also states that Proposition 1 is a known type of condition [31,33].
-- We added two comparators. A TSK rule base with three terms per input (27 rules) reaches {{S.r4.S2_D1_to_D2.tsk3.auc.e}} on D2. Monotone gradient boosting with constraints in the selected directions reaches {{S.r4.S2_D1_to_D2.mono_gbm.auc.e}}. Neither changes any verdict (Section 8, Table S7).
-- We did not run FURIA, because we found no maintained implementation outside Weka; Section 8 says so.
-- First-order consequents were not run. The three-term variant already tests the grid, and a first-order consequent would lose the monotonicity guarantee of Proposition 1.
+**M4. Scope.**
+- The claims are narrowed. The title is now "… Auditing Zero-Order TSK Rule Models of Student–AI Interaction", and the abstract and Section 10 state the model class.
+- FURIA was run through Weka (jars from Maven Central) on the three SC-TSK inputs and on all candidates. It learns 2–5 rules and is inconclusive in every split.
+- Genetic fuzzy systems and first-order TSK were not run; Section 10 says so.
 
-**M5. Simulation.**
-- The scenarios are renamed A (structure), B (propensity), C (persistence) and D (true effect).
-- A mixed design (plan R4-E) adds a within-student effect β ∈ {0, 0.25, 0.5, 1} to each confound, with 3–5 or 6–10 requests per student, 100 replications per condition and 500 bootstrap resamples. Results are in Figure 5 and Table S9.
-- With β = 0 the audit calls x1 behavioural in at most {{S.syn4_fp_max}}% of replications; naive transfer does so in {{S.syn4_naive_ab}}% under the structural and propensity confounds.
-- Power under the structural confound is {{S.syn4['A_0.25_3-5'].all_checks}}–{{S.syn4['A_0.25_6-10'].all_checks}}% at β = 0.25, {{S.syn4['A_0.5_3-5'].all_checks}}–{{S.syn4['A_0.5_6-10'].all_checks}}% at 0.5 and 100% at 1.
-- An important finding the reviewer anticipated: under the persistence confound the audit is conservative. Even at β = 1 it detects the effect in only {{S.syn4['C_1.0_3-5'].all_checks}}% and {{S.syn4['C_1.0_6-10'].all_checks}}% of replications. Sections 7 and 10 now say that Study 3's failure of Check 2 means that no behavioural effect was shown, not that none exists.
+**M5. A construction aligned with the audit.** RF-TSK fits b_all first. It then fits the consequents to the residual, using within-student deviations as inputs (Section 8). It fails Check 2 on D2 and D1 and is inconclusive elsewhere. We report this as a negative result and explain it: much of SC-TSK's advantage over the baselines on D2 comes from first queries, which have no earlier request to deviate from.
 
-**M6. Study 3 inputs.**
-- The planned model is kept, because it is what the plan fixed. Two alternatives are now reported in Table 5 and Section 6.2.
-- Without the number of earlier turns, which is structural by Table 1, the rule base reaches {{S.r4.S3_SW_to_AW_IRW.no_turns.auc.e}} and beats persistence on AW + IRW (gap {{S.r4.S3_SW_to_AW_IRW.no_turns.persistence.e}}, CI {{S.r4.S3_SW_to_AW_IRW.no_turns.persistence.lo}} to {{S.r4.S3_SW_to_AW_IRW.no_turns.persistence.hi}}). In the reverse direction it falls to {{S.r4.S3_AW_IRW_to_SW.no_turns.auc.e}}, and its reply-length input fails Check 1.
-- A rule base bagged over the 200 splits reaches {{S.r4.S3_SW_to_AW_IRW.bagged.auc.e}} and {{S.r4.S3_AW_IRW_to_SW.bagged.auc.e}}.
-- The 0.240 is the gain of structure + SC-TSK over structure. It is now defined in the text, and the row "Structure, full + SC-TSK" ({{S.r1.structure_plus_sc_tsk.e}}) is added to Table 5.
+**M6. Study 1 label.**
+- With y residualised within semester × group, group-only falls to {{S.r5.s1.f24_to_s25.group_only.e}}/{{S.r5.s1.s25_to_f24.group_only.e}}.
+- CF-TSK then reaches {{S.r5.s1.f24_to_s25.cf_tsk.e}} (CI {{S.r5.s1.f24_to_s25.cf_tsk.lo}} to {{S.r5.s1.f24_to_s25.cf_tsk.hi}}) and {{S.r5.s1.s25_to_f24.cf_tsk.e}}, so Check 3 is inconclusive and no behavioural signal can be shown (Section 4.3).
+- The "author-set consequents" model is now distinguished from the author-specified rules. It is the rules' directions applied to counts, and it ranks below chance; Section 4.2 says so.
 
-**M7. Study 1.**
-- "Expert rules" is replaced by "author-specified rule base" throughout.
-- The 98.75% level is explained as the Bonferroni level for the four hypotheses of E10.
-- The abstract and Section 4.3 now say "student–assessment units".
-- Study 1 was already compressed in the previous round; E1–E12 remain in Supplementary S1.
-- The withdrawn manuscript is disclosed in the cover letter and in Section 1.
+**M7. Three outcomes for Check 1.**
+- Check 1 is now supported, contradicted or inconclusive, with Bonferroni intervals at 1 − 0.05/k.
+- Study 1 is "inconclusive", no longer "fails".
+- At this level Check 1 is inconclusive on D2 → D1, which Section 5.2 reports.
 
-**M8. Plan status.** Section 3.2, Table 2 and Algorithm 1 are now aligned. E1–E6 used rules in code. Every later analysis had a plan committed before it ran, but only Study 3 and R2–R4 had the plan on a public host before the run, and only these meet Check 3 as defined. Table 2 has a column for this, and its last row lists the R3-G and R4-E simulations.
+**M8. One interval level.** Every audit decision uses 95% (Bonferroni across inputs for Check 1). The plan-level 98.33% and 98.75% intervals have moved to Supplementary S2.
 
-**M9. Probabilities.** Consequents are now called relative scores in the text and in the figure legends. Section 8 reports calibration, with full results in Table S8 and Figure S1. On D2 the SC-TSK Brier score is {{S.r4.S2_D1_to_D2.cal.sc_tsk.brier}}, against {{S.r4.S2_D1_to_D2.cal.sc_tsk.brier_base}} for a constant forecast, with an expected calibration error of {{S.r4.S2_D1_to_D2.cal.sc_tsk.ece}}. On D3 the error is {{S.r4.S2_D12_to_D3.cal.sc_tsk.ece}}, where the base rate shifts from {{S.r4.S2_D12_to_D3.cal.bt}} to {{S.r4.S2_D12_to_D3.cal.bte}}.
+**Minor comments**
+1. Table 8 and Section 8 report distinct consequents ({{S.r5.S2_D1_to_D2.distinct}} on D1) and support at four thresholds. The D1 table is described as "one rule with an exception".
+2. Section 6.2 already explains that the stability distribution is a mixture of a few input sets.
+3. 0.4729 and 0.4733 coincide at three decimals; Table 5 now says so.
+4. Algorithm 2 and Section 3.3 now both use the 10⁻⁹ threshold. SLSQP from ten random starts changes no consequent by more than {{S.slsqp_max}}.
+5. ECE uses 10 equal-width bins (Section 8, Table S8).
+6. D3 is labelled secondary in Section 5.2.
+7. The comparisons on non-first queries are reported (Section 5.2, S6).
+8. Section 3.3 justifies 500 resamples in the simulation.
+9. Internal labels have been removed from the main text, and the details of the analysis plans are in Supplementary S2.
+10. [14] is no longer used to support a claim. [26]'s DOI resolves at doi.org. [15], [17] and [24] remain preprints.
+11. Section 7 summarises the simulation rates, and Section 4.3 summarises the interpretable comparators of Study 1.
+12. Mundlak [38], Curran and Bauer [39] and Alonso, Castiello and Mencar [40] are added; all were checked against Crossref.
+13. Highlights have been rewritten without "Check 2".
 
-# Minor comments
-1. In Studies 2 and 3 the student is the only cell below the cohort, so lines 3 and 4 of Algorithm 1 coincide. This is stated in Section 3.1 and in the caption of Algorithm 1.
-2. The phrase has been replaced by "each estimated mainly from the cases its rule covers"; Section 3.3 says the consequents are fitted jointly.
-3. Eq. (3) now states that y = 0 when llm_g = 0.
-4. The labels of Figure 2b are now self-explanatory, and the caption defines them.
-5. The caption of Table 4 mentions both interval levels.
-6. The phrase now reads "coincide to three decimals".
-7. Data availability now refers to Table 2 and Supplementary Table S2.
-8. Highlight 2 has been rewritten. All highlights are at most 85 characters.
-9. Section 10 explains the counts: SW has {{S.rc_fmt.SW.s}} students, {{S.r3.S3_SW_to_AW_IRW.fe.prev_production_share.counts.students_ge2}} made two or more requests, and {{S.r3.S3_SW_to_AW_IRW.fe.prev_production_share.counts.students_both_classes}} made requests of both kinds.
-10. The declaration uses Elsevier's heading and wording.
+# Report B
 
-# Presentation and references
-- Equations (1)–(3), Proposition 1 and its proof, and the algorithms are now typeset with LaTeX. Inline symbols use sub- and superscripts.
-- Figure 1 shows only the procedure, with the outcomes moved to the caption, and its text is larger.
-- Table 1 may still break across a page in the Word layout. The journal's typesetting will control this.
-- [17] now lists all 21 authors.
-- [26]: the DOI 10.3233/irg-2006-16(2)02 is the one Crossref assigns, and doi.org resolves it.
-- [14] cites the stable alphaXiv abstract page; it has no arXiv or DOI record.
-- [15] and [24] have no published versions yet; [15] is listed as to appear in UIST '26.
+**1. Decision table.** Table 1 gives the outcomes of each check and the combination rule; a fail or contradiction overrides passes.
+**2. Broader simulation.** Table 7 and Figure 5 cover several session lengths, effect sizes and confounds, plus hierarchical structure (cells with student intercepts), label noise, measurement error, missing records, time-varying and non-linear effects, several sessions and a correlated confounder. Varying the random-effect variance was not added.
+**3. Three-way verdict.** This is adopted (Table 1). Under the incremental check the audit is no longer conservative under persistence at β = 1.
+**4. Structural and mixed variables.** The definitions and the adjudication rule are in Section 3.1 and Table 2. Test progress decides the size of the gain over structure on D2; Section 5.2 reports both classifications.
+**5. Label quality.** In the simulation, label noise of 15% leaves the false-positive rate at {{S.syn5['AB_0.0_6-10_labelnoise'].behavioural}}% and power at {{S.syn5['AB_0.5_6-10_labelnoise'].behavioural}}% (Table 7). Section 9 adds that a structurally defined label cannot be audited into a behavioural one.
+**6. Transfer protocol.** Section 3.1 now states the purpose of Check 3, how cohorts are defined, that nothing is refitted on the target, how base rates are handled, and that transfer is not evidence against shortcuts.
+**7. SM-TSK.** In the simulation, a wrong direction drives SM-TSK to chance and a non-monotone effect escapes it. Under label noise it matches SC-TSK (Table 7). Monotone gradient boosting gives similar AUC (Section 8).
+**8. Support threshold.** Counts at 5, 10, 20 and 30 cases and bootstrap intervals of the consequents are reported. Rules with intervals wider than 0.5 are marked unstable.
+**9. Prediction versus explanation.** A new paragraph in Section 9 states what a behavioural verdict does and does not establish.
+**10. Reproducibility.** A machine-readable manifest (manuscript_A/manifest.json) links each table and figure to its plan, code and result files. Every number is rendered from those files by one script.
+
+**Minor comments.** The title is now descriptive. The scope (binary labels) and the treatment of ties, zero-variance inputs, the quartiles, w0 and z0 are stated in Sections 3.1 and 3.3. Rank correlation is justified in Section 3.1. Calibration is reported for all splits (Table S8). No student identifier is shared between the TutorTrace deployments or between the RECIPE4U course groups. We did not add precision, recall and F1, because the audit concerns ranking and no alert threshold has been validated with instructors.

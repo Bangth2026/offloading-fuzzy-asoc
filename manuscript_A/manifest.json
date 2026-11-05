@@ -1,0 +1,133 @@
+{
+ "renderer": "manuscript_A/fill_A.py (every number in the manuscript, supplementary material, cover letter and response is read from the result files below; the script refuses to build if a placeholder is unresolved)",
+ "figures_script": "manuscript_A/make_figs_A.py",
+ "items": {
+  "Table 3, Figure 2": {
+   "plans": [
+    "PREREG_E10.md",
+    "PREREG_R1.md",
+    "PREREG_R1b.md",
+    "PREREG_R1c.md"
+   ],
+   "code": [
+    "src/run_transfer.py",
+    "src/run_revision.py",
+    "src/run_revision_b.py"
+   ],
+   "results": [
+    "results/paper_stats_fuzzy.json",
+    "results/audit_cells.json",
+    "results/r2_stats.json"
+   ]
+  },
+  "Section 4.3 residualised label": {
+   "plans": [
+    "PREREG_R5.md"
+   ],
+   "code": [
+    "study2/run_r5.py"
+   ],
+   "results": [
+    "results/r5_stats.json"
+   ]
+  },
+  "Table 4, Figure 3": {
+   "plans": [
+    "study2/PREREG_S2_tutortrace.md",
+    "PREREG_R2.md",
+    "PREREG_R3.md",
+    "PREREG_R4.md"
+   ],
+   "code": [
+    "study2/run_s2.py",
+    "study2/run_r2.py",
+    "study2/run_r3.py",
+    "study2/run_r4.py"
+   ],
+   "results": [
+    "study2/results_s2.json",
+    "results/r2_stats.json",
+    "results/r3_stats.json",
+    "results/r4_stats.json"
+   ]
+  },
+  "Table 5, Figure 4": {
+   "plans": [
+    "study3/PREREG_S3_recipe4u.md",
+    "PREREG_R2.md",
+    "PREREG_R3.md",
+    "PREREG_R4.md"
+   ],
+   "code": [
+    "study3/run_s3.py",
+    "study2/run_r2.py",
+    "study2/run_r3.py",
+    "study2/run_r4.py"
+   ],
+   "results": [
+    "study3/results_s3.json",
+    "results/r2_stats.json",
+    "results/r3_stats.json",
+    "results/r4_stats.json"
+   ]
+  },
+  "Table 6 (verdicts), Table S10, Table S11": {
+   "plans": [
+    "PREREG_R5.md"
+   ],
+   "code": [
+    "study2/run_r5.py"
+   ],
+   "results": [
+    "results/r5_stats.json"
+   ]
+  },
+  "Table 7, Figure 5, Table S12": {
+   "plans": [
+    "PREREG_R5.md"
+   ],
+   "code": [
+    "study2/run_r5.py"
+   ],
+   "results": [
+    "results/r5_synthetic.json"
+   ]
+  },
+  "Table 8, Section 8": {
+   "plans": [
+    "PREREG_R2.md",
+    "PREREG_R3.md",
+    "PREREG_R4.md",
+    "PREREG_R5.md"
+   ],
+   "code": [
+    "study2/run_r2.py",
+    "study2/run_r3.py",
+    "study2/run_r4.py",
+    "study2/run_r5.py"
+   ],
+   "results": [
+    "results/r2_stats.json",
+    "results/r3_stats.json",
+    "results/r4_stats.json",
+    "results/r5_stats.json"
+   ]
+  },
+  "Supplementary S1\u2013S5": {
+   "plans": [
+    "PREREG_*.md"
+   ],
+   "code": [
+    "src/",
+    "study2/",
+    "study3/"
+   ],
+   "results": [
+    "results/*.json",
+    "study2/results_s2.json",
+    "study3/results_s3.json"
+   ]
+  }
+ },
+ "regeneration": "With the three datasets obtained from their providers, each run_*.py script reproduces its result file; fill_A.py and make_figs_A.py then rebuild the documents without manual steps. FURIA requires Java and the Weka 3.8.6 and fuzzyUnorderedRuleInduction 1.0.2 jars from Maven Central."
+}

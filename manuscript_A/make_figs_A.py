@@ -140,16 +140,16 @@ b.set_title(f"(b) SM-TSK rule table, trained on SW (base rate {o['train_dependen
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig4_recipe4u.png"), dpi=300, bbox_inches="tight"); plt.close()
 print("figure 4 written")
 
-# ---------------------------------------------------------------- Figure 5: simulation (R4-E)
-syn = json.load(open(os.path.join(ROOT, "results/r4_synthetic.json")))
+# ---------------------------------------------------------------- Figure 5: simulation (R5-E)
+syn = [o for o in json.load(open(os.path.join(ROOT, "results/r5_synthetic.json"))) if o["violation"] == "none"]
 fig, ax = plt.subplots(1, 3, figsize=(11, 3.3), sharey=True)
 names = {"A": "(a) Structural confound", "B": "(b) Propensity confound", "C": "(c) Persistence confound"}
-betas = [0.0, 0.25, 0.5, 1.0]
+betas = [0.0, 0.5, 1.0]
 for a, c in zip(ax, ("A", "B", "C")):
     for req, col, mk in (("3-5", BLUE, "o"), ("6-10", ORANGE, "s")):
         rows = {o["beta"]: o for o in syn if o["confound"] == c and o["requests"] == req}
-        a.plot(betas, [100 * rows[b]["all_checks"] for b in betas], marker=mk, color=col, lw=2, label=f"audit, {req} requests")
-        a.plot(betas, [100 * rows[b]["naive"] for b in betas], ls="--", color=col, lw=1.2, alpha=0.8, label=f"naive transfer, {req}")
+        a.plot(betas, [100 * rows[b]["behavioural"] for b in betas], marker=mk, color=col, lw=2, label=f"audit, {req} requests")
+        a.plot(betas, [100 * rows[b]["fe_behavioural"] for b in betas], ls="--", color=col, lw=1.2, alpha=0.8, label=f"fixed effects, {req}")
     a.set_title(names[c], loc="left", fontsize=9.5); a.set_xticks(betas); a.set_xlabel("within-student effect β (0 = no effect)")
     a.set_ylim(-3, 103); clean(a)
 ax[0].set_ylabel("% of replications called behavioural")

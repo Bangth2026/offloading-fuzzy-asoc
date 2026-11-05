@@ -183,6 +183,38 @@ def context(repo_url, doi):
                     q[m] = gp(o[m]); q[m]["sel"] = o[m].get("selected"); q[m]["pad"] = o[m].get("padded")
             R4[f"{st_}_{k}"] = q
     S["r4"] = R4
+
+    # --- R5 (PREREG_R5.md)
+    r5 = json.load(open(os.path.join(ROOT, "results/r5_stats.json")))
+    R5 = {}
+    def au(a):
+        o = {"auc": ci(a["auc"]), "gain": ci(a["gain_all"]), "c2": a["check2"], "c3": a["check3"], "v": a.get("overall")}
+        if "gain_each" in a:
+            o["each"] = {b: ci(g) for b, g in a["gain_each"].items()}
+        if "rules" in a:
+            o["rules"] = a["rules"]
+        return o
+    for st_, keys in (("S2", ("D1_to_D2", "D2_to_D1", "D12_to_D3")), ("S3", ("SW_to_AW_IRW", "AW_IRW_to_SW"))):
+        for k in keys:
+            o = r5[st_][k]
+            q = {"sel": o["selected"], "c1": o["check1"]["verdict"], "c1lvl": f"{o['check1']['level']:.2f}",
+                 "c1in": {i: {"r": f3(v["rho"]), "lo": f3(v["ci"][0]), "hi": f3(v["ci"][1]), "st": v["state"]} for i, v in o["check1"]["inputs"].items()}}
+            for m in ("sc", "sm", "furia3", "furia_all", "rf"):
+                q[m] = au(o[m])
+            q["below"] = o["below"]; q["distinct"] = o["distinct_sm"]; q["slsqp"] = f"{o['slsqp_max_dev']:.0e}"
+            if "sm_ci" in o:
+                q["smci"] = {"lo": [f2(x) for x in o["sm_ci"]["lo"]], "hi": [f2(x) for x in o["sm_ci"]["hi"]], "unstable": o["sm_ci"]["unstable"]}
+            if "non_first" in o:
+                n = o["non_first"]; q["nf"] = {"n": n["n"], "sc": ci(n["sc"]), "pers": ci(n["persistence"]), "prop": ci(n["propensity"]),
+                                               "dpers": ci(n["sc_minus_persistence"]), "dprop": ci(n["sc_minus_propensity"])}
+            R5[f"{st_}_{k}"] = q
+    R5["s1"] = {k: {m: ci(v) for m, v in o.items() if m != "base_rate_test"} for k, o in r5["S1_residualised"].items()}
+    S["r5"] = R5
+    S["s3struct4"] = (f"{json.load(open(os.path.join(ROOT, 'study3/results_s3.json')))['primary_SW_to_AW_IRW']['auc']['structure_only'][0]:.4f}", f"{r2['S3']['SW_to_AW_IRW']['auc_structure_restricted'][0]:.4f}")
+    S["slsqp_max"] = f"{max(r5[st_][k]['slsqp_max_dev'] for st_ in ('S2', 'S3') for k in r5[st_]):.0e}"
+    syn5 = json.load(open(os.path.join(ROOT, "results/r5_synthetic.json")))
+    S["syn5_b1max"] = f"{100 * max(o['behavioural'] for o in syn5 if o['beta'] == 1.0 and o['violation'] == 'none'):.0f}"
+    S["syn5"] = {f"{o['confound']}_{o['beta']}_{o['requests']}_{o['violation']}": {k: (f"{100 * v:.0f}" if isinstance(v, float) and not k.startswith("auc") and k != "beta" else (f3(v) if k.startswith("auc") else v)) for k, v in o.items()} for o in syn5}
     S["sup2"] = r2["S2"]["D1_to_D2"]["cell_support"]; S["sup3"] = r2["S3"]["SW_to_AW_IRW"]["cell_support"]
     syn4 = json.load(open(os.path.join(ROOT, "results/r4_synthetic.json")))
     S["syn4"] = {f"{o['confound']}_{o['beta']}_{o['requests']}": {k: (f"{100 * v:.0f}" if isinstance(v, float) and k not in ("beta",) else v) for k, v in o.items()} for o in syn4}

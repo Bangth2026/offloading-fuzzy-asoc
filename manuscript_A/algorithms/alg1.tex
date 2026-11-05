@@ -1,27 +1,22 @@
 \input{common}
 \begin{document}
-
 \begin{algorithm}[H]
 \caption{Audit of a rule model $f$ on interaction data}
 \begin{algorithmic}[1]
-\Require training cohort $D_{\mathrm{tr}}$, test cohort $D_{\mathrm{te}}$; label $y$; behavioural inputs $X$; structural cells $G$; student identifier $u$; written plan $P$ (hypotheses, margins, interval levels)
-\Ensure within-sample associations, baseline gaps, transfer decisions
-\State commit $P$ and push it to a public host before $f$ or any baseline is fitted \Comment{verifiable only if pushed}
-\For{each input $x$ used by $f$, with rule direction $d_x \in \{-1,+1\}$} \Comment{Check 1}
-  \State $\rho_G(x) \gets$ Spearman correlation of within-cell ranks of $x$ and $y$ (if cells other than students exist)
-  \State $\rho_u(x) \gets$ Spearman correlation of within-student ranks of $x$ and $y$
-  \State interval of each $\rho$: student-cluster bootstrap, $B = 2000$
-  \State Check 1 passes for $x$ if every interval excludes $0$ with sign $d_x$; $x$ \emph{contradicts} its rule if one excludes $0$ with sign $-d_x$
+\Require training cohort $D_{\mathrm{tr}}$, test cohort $D_{\mathrm{te}}$; binary label $y$; the $k$ inputs of $f$ with directions $d_x \in \{-1,+1\}$; structural variables; cells $G$; student identifier $u$
+\Ensure an outcome for each check and an overall verdict
+\For{each input $x$ of $f$} \Comment{Check 1}
+  \State $\rho_G(x), \rho_u(x) \gets$ Spearman correlations of within-cell and within-student ranks of $x$ and $y$ on $D_{\mathrm{tr}}$
+  \State intervals at level $1 - 0.05/k$ (student-cluster bootstrap, $B = 2000$)
 \EndFor
-\State $b_S \gets$ logistic regression on structural variables, fitted on $D_{\mathrm{tr}}$ \Comment{Check 2}
-\State $b_M \gets y$ of the previous request in the session ($0.5$ if none)
-\State $b_P \gets$ share of $y = 1$ among the student's earlier requests ($0.5$ if none)
-\For{$b \in \{b_S, b_M, b_P\}$}
-  \State $\Delta_b \gets \mathrm{AUC}(f) - \mathrm{AUC}(b)$ on $D_{\mathrm{te}}$ ($b_S$: AUC of $b_S$ with $f$ added minus AUC of $b_S$); Check 2 passes against $b$ if the lower bound of $\Delta_b > 0$
-\EndFor
-\State fit $f$ once on $D_{\mathrm{tr}}$, score $D_{\mathrm{te}}$ once; Check 3 passes if the lower bound of $\mathrm{AUC}(f) > 0.5$ under a plan pushed before the run \Comment{Check 3}
-\State \Return the verdict of each check separately; call $f$ behavioural only if all three checks pass
+\State Check 1 $\gets$ \emph{supported} if every interval excludes 0 with sign $d_x$; \emph{contradicted} if one excludes 0 with sign $-d_x$; else \emph{inconclusive}
+\State $b_{\mathrm{all}} \gets$ logistic regression on structural variables, $b_M$ (previous label in the session) and $b_P$ (student's earlier share of $y=1$), fitted on $D_{\mathrm{tr}}$ \Comment{Check 2}
+\State $\Delta \gets \mathrm{AUC}(b_{\mathrm{all}} + f) - \mathrm{AUC}(b_{\mathrm{all}})$ on $D_{\mathrm{te}}$, 95\% interval $[\ell, h]$
+\State Check 2 $\gets$ \emph{pass} if $\ell > 0$; \emph{fail} if $h < 0.01$; else \emph{inconclusive}
+\State fit $f$ once on $D_{\mathrm{tr}}$, score $D_{\mathrm{te}}$ once; 95\% interval of $\mathrm{AUC}(f)$ \Comment{Check 3}
+\State Check 3 $\gets$ \emph{pass} if the lower bound $> 0.5$; \emph{fail} if the upper bound $\le 0.5$; else \emph{inconclusive}
+\State verdict $\gets$ \emph{behavioural} if all three pass; \emph{not behavioural} if a check fails or Check 1 is contradicted; else \emph{inconclusive}
+\State \Return the three outcomes, the verdict, and separately whether the analysis plan was public before the run
 \end{algorithmic}
 \end{algorithm}
-
 \end{document}
