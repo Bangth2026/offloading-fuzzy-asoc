@@ -49,3 +49,6 @@ manuscript_A/build/
 !results/r4_stats.json
 !results/r4_synthetic.json
 !results/r4_log.txt
+!results/r5_stats.json
+!results/r5_synthetic.json
+!results/r5_log.txt
