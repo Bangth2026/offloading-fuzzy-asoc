@@ -30,7 +30,7 @@ for x, t, c in boxes:
     ax.text(x + 1.125, 1.675, t, ha="center", va="center", fontsize=9, color=INK)
 for x in (2.35, 4.8, 7.25):
     ax.annotate("", xy=(x + 0.2, 1.675), xytext=(x, 1.675), arrowprops=dict(arrowstyle="->", color=MUTED, lw=1.4))
-notes = [(3.675, "S1: FR1 sign vanishes within groups\nS2: signs hold within students\nS3: lagged-label input holds"), (6.125, "S1: structure beats all models\nS2: rules beat persistence on D3\nS3: persistence matches rules"),
+notes = [(3.675, "S1: FR1 sign vanishes within groups\nS2: signs hold within students\nS3: lagged-label input holds"), (6.125, "S1: structure beats all models\nS2: structure explains much the same\nS3: persistence matches rules"),
          (8.575, "S1: transfers via structure\nS2, S3: transfer holds")]
 for x, t in notes:
     ax.text(x, 0.42, t, ha="center", va="center", fontsize=7.5, color=MUTED, style="italic")
@@ -61,7 +61,7 @@ for i, (lab, p, r) in enumerate(rows[::-1]):
 a.axvline(0.5, color=MUTED, ls="--", lw=1); a.set_yticks(range(len(rows)), [r[0] for r in rows[::-1]])
 a.set_xlabel("AUC on the held-out semester (95% CI)"); a.set_xlim(0.3, 0.86); clean(a)
 a.plot([], [], "o", color=BLUE, label="Fall → Spring"); a.plot([], [], "s", color=ORANGE, label="Spring → Fall")
-a.legend(frameon=False, fontsize=8, loc="lower right"); a.set_title("(b) Cross-semester AUC, pooled label", loc="left", fontsize=9.5)
+a.legend(frameon=False, fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2); a.set_title("(b) Cross-semester AUC, pooled label", loc="left", fontsize=9.5)
 a = ax[2]; D = R1b["direction_within_group"]
 keys = ["v", "u", "p", "e", "log_W", "log_C", "log_P"]
 labs = ["v  unchecked acceptance", "u  surface dependency", "p  provide-context share", "e  verification share",
@@ -95,7 +95,12 @@ M = np.array(z).reshape(2, 4)    # rows: first input LOW/HIGH; cols: (second, th
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
 for r in range(2):
     for c in range(4):
-        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP2[r * 4 + c]})", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=8.5)
+        lowc = SUP2[r * 4 + c] < 10
+        if lowc:
+            b.add_patch(plt.Rectangle((c - 0.5, r - 0.5), 1, 1, fill=False, hatch="///", ec="#9a9a9a", lw=0))
+        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP2[r * 4 + c]})" + ("\nn < 10" if lowc else ""), ha="center", va="center",
+               color=("white" if M[r, c] > 0.6 else INK) if not lowc else "#555555", fontsize=8.5, style="italic" if lowc else "normal",
+               bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8) if lowc else None)
 short = {"pre_net_code_growth": "code growth", "pre_chars_inserted": "chars inserted", "pre_duration_s": "pre-query duration"}
 n1, n2, n3 = (short.get(s, s) for s in sel)
 b.set_yticks([0, 1], [f"{n1} LOW", f"{n1} HIGH"])
@@ -124,7 +129,12 @@ M = np.array(z).reshape(2, 4)
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
 for r in range(2):
     for c in range(4):
-        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP3[r * 4 + c]})", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=8.5)
+        lowc = SUP3[r * 4 + c] < 10
+        if lowc:
+            b.add_patch(plt.Rectangle((c - 0.5, r - 0.5), 1, 1, fill=False, hatch="///", ec="#9a9a9a", lw=0))
+        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP3[r * 4 + c]})" + ("\nn < 10" if lowc else ""), ha="center", va="center",
+               color=("white" if M[r, c] > 0.6 else INK) if not lowc else "#555555", fontsize=8.5, style="italic" if lowc else "normal",
+               bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8) if lowc else None)
 b.set_yticks([0, 1], ["earlier production\nrequests: none", "earlier production\nrequests: some"])
 b.set_xticks(range(4), ["reply L\nturns L", "reply L\nturns H", "reply H\nturns L", "reply H\nturns H"], fontsize=8)
 b.set_xlabel("reply = mean length of earlier ChatGPT replies, turns = earlier turns in session", fontsize=8, color=MUTED)

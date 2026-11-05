@@ -115,7 +115,52 @@ def context(repo_url, doi):
     S["eq_maxbound"] = f2(max(max(abs(v["ci90"][0]), abs(v["ci90"][1])) for v in EQ.values()))
     S["eq_none"] = not any(v["equivalent"] for v in EQ.values())
     S["s1cells"] = r2["S1"]["cell_counts"]; S["s1_zero_share"] = f"{100 * r2['S1']['share_zero_overall']:.0f}"
-    S["s1_thr"] = f3(r2["S1"]["pooled_threshold"]); S["padded"] = r2["padded_selections"]
+    S["s1_thr"] = f3(r2["S1"]["pooled_threshold"]); S["s1_thr_f24"] = f3(r2["S1"]["f24_threshold"]); S["padded"] = r2["padded_selections"]
+
+    # --- R3 (PREREG_R3.md)
+    r3 = json.load(open(os.path.join(ROOT, "results/r3_stats.json")))
+    R3 = {}
+    for st_, keys in (("S2", ("D1_to_D2", "D2_to_D1", "D12_to_D3")), ("S3", ("SW_to_AW_IRW", "AW_IRW_to_SW"))):
+        for k in keys:
+            o = r3[st_][k]; q = {"sel": o["selected"]}
+            q["fe"] = {}
+            for inp, a in o["A"].items():
+                d = {}
+                for part in ("train", "test"):
+                    cl = a[part]["cond_logit"]
+                    d[part] = {"b": f2(cl["coef"]), "lo": f2(cl["ci"][0]), "hi": f2(cl["ci"][1]), "n": cl["students"], "req": cl["requests"]}
+                d["counts"] = a["train"]["counts"]; q["fe"][inp] = d
+            B = o["B"]; one = "|".join(sorted(o["selected"]))
+            q["stab"] = {"same": B["selected_sets"].get(one, 0), "nsets": len(B["selected_sets"]), "med": f3(B["auc_median"]),
+                         "lo": f3(B["auc_p2_5"]), "hi": f3(B["auc_p97_5"]), "top": max(B["selected_sets"].items(), key=lambda kv: kv[1]),
+                         "ssel": B["stability_selected"], "spad": B["stability_padded"], "sauc": ci(B["stability_auc"]),
+                         "elig": B["eligible_share"]}
+            if "C" in o:
+                q["C"] = {"st": ci(o["C"]["structure_A1"]), "h2": ci(o["C"]["H2_gain_A1"]), "d": ci(o["C"]["sc_minus_structure_A1"])}
+            E = o["EF"]
+            q["aN"] = {"auc": ci(E["alpha_N10"]["auc"]), "alpha": f"{E['alpha_N10']['alpha']:.0f}",
+                       "low": [{"rule": c["rule"], "n": c["support"], "z1": f2(c["z_alpha1"]), "zN": f2(c["z_alphaN10"])} for c in E["alpha_N10"]["low_support_cells"]],
+                       "base": f2(E["alpha_N10"]["base_rate"])}
+            q["mono"] = {"sc": f"{100 * E['output_monotonicity']['sc_tsk']['overall']:.1f}", "sm": f"{100 * E['output_monotonicity']['sm_tsk']['overall']:.1f}",
+                         "per": {i: f"{100 * v:.1f}" for i, v in E["output_monotonicity"]["sc_tsk"]["per_input"].items()}}
+            q["dflt"] = E["defaults"]
+            if "within_student_scores" in E:
+                q["wss"] = {m: {"r": f3(v["rho"]), "lo": f3(v["ci"][0]), "hi": f3(v["ci"][1])} for m, v in E["within_student_scores"].items()}
+            if "D_conditional" in o:
+                c = o["D_conditional"]
+                q["cond"] = {"n": c["n"], "pos": c["pos"], "sc": ci(c["sc_tsk"]),
+                             "other": {i: ci(v) for i, v in c.items() if i not in ("n", "pos", "sc_tsk")}}
+            R3[f"{st_}_{k}"] = q
+    R3["noise"] = {e: {sp: {m: f3(v["mean"]) for m, v in d.items()} | {"sc_min": f3(d["sc"]["min"]), "sc_max": f3(d["sc"]["max"])}
+                       for sp, d in dd.items()} for e, dd in r3["S3"]["D_noise"].items()}
+    syn = json.load(open(os.path.join(ROOT, "results/r3_synthetic.json")))
+    R3["syn"] = {k: {m: f"{100 * v:.1f}" for m, v in o.items() if m != "reps"} | {"reps": o["reps"]} for k, o in syn.items()}
+    S["r3"] = R3
+    sens_src = {f"S2_{k}": r2["S2"][k]["sensitivity"] for k in ("D1_to_D2", "D2_to_D1", "D12_to_D3")}
+    sens_src.update({f"S3_{k}": r2["S3"][k]["sensitivity"] for k in ("SW_to_AW_IRW", "AW_IRW_to_SW")})
+    S["sens_keys"] = list(sens_src["S2_D1_to_D2"].keys())
+    S["sens"] = {sp: {k: f3(v) for k, v in d.items()} for sp, d in sens_src.items()}
+    S["sens_all"] = (f3(min(min(d.values()) for d in sens_src.values())), f3(max(max(d.values()) for d in sens_src.values())))
     s3 = json.load(open(os.path.join(ROOT, "study3/results_s3.json")))
     S["rc"] = s3["counts"]
     S["rc_fmt"] = {c: {"n": v["requests"], "s": v["students"], "p": f2(v["production_rate"])} for c, v in s3["counts"].items()}
@@ -133,13 +178,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-url", default="https://github.com/Bangth2026/offloading-fuzzy-asoc")
     ap.add_argument("--doi", default="10.5281/zenodo.23940473")
-    ap.add_argument("--vdoi", default="10.5281/zenodo.23969402")  # version DOI of release v1.2.0
+    ap.add_argument("--vdoi", default="10.5281/zenodo.23969402")  # version DOI of the release cited
+    ap.add_argument("--release", default="v1.2.0")
     a = ap.parse_args()
     S = context(a.repo_url, a.doi)
-    S["vdoi"] = a.vdoi
+    S["vdoi"] = a.vdoi; S["release"] = a.release
     env = Environment(undefined=StrictUndefined, keep_trailing_newline=True)
     out = os.path.join(HERE, "build"); os.makedirs(out, exist_ok=True)
-    for name in [n for n in ("manuscript_A", "cover_letter_A", "response_A") if os.path.exists(os.path.join(HERE, f"{n}.txt"))]:
+    for name in [n for n in ("manuscript_A", "cover_letter_A", "response_A", "supplementary_A") if os.path.exists(os.path.join(HERE, f"{n}.txt"))]:
         txt = env.from_string(open(os.path.join(HERE, f"{name}.txt"), encoding="utf8").read()).render(S=S)
         for bad in ("[TBD", "{{", "{%", "[CẦN"):
             if bad in txt:

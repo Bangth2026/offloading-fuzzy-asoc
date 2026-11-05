@@ -1,0 +1,29 @@
+\input{common}
+\begin{document}
+
+\setcounter{algorithm}{1}
+\begin{algorithm}[H]
+\caption{SC-TSK: sign-checked construction of a zero-order TSK rule base}
+\begin{algorithmic}[1]
+\Require training requests $(\mathbf{x}_n, y_n, u_n)$, $n = 1,\dots,N$; candidate inputs $c_1,\dots,c_m$; $k = 3$; $w_0 = 0.05$; $z_0 = 0.5$; $\alpha = 1$; random seed
+\Ensure selected inputs $S$, directions $d$, memberships, consequents $\mathbf{z}$
+\State $x \gets \operatorname{sign}(x)\log(1 + |x|)$ for every candidate
+\State split the training students at random into halves $H_1, H_2$
+\For{each candidate $c$ with at least two distinct values}
+  \State $a_c \gets \mathrm{AUC}(c, y)$;\; $a_{c,1}, a_{c,2} \gets$ AUC on $H_1$, $H_2$ ($0.5$ if a half has one class)
+  \State $\mathrm{eligible}(c) \gets \big[\operatorname{sign}(a_{c,1} - 0.5) = \operatorname{sign}(a_{c,2} - 0.5)\big] \wedge \big[a_{c,1} \neq 0.5\big]$ \Comment{Check 1}
+  \State $d_c \gets \operatorname{sign}(a_c - 0.5)$
+\EndFor
+\State $S \gets$ the $k$ eligible candidates with the largest $|a_c - 0.5|$
+\For{each $i \in S$}
+  \State $q_i, Q_i \gets$ 25th and 75th training percentiles; \textbf{if} $Q_i - q_i < 10^{-9}$ \textbf{then} $Q_i \gets q_i + 10^{-3}$
+  \State $\mu^{H}_i(x) \gets \min\{1, \max\{0, (x - q_i)/(Q_i - q_i)\}\}$;\; $\mu^{L}_i(x) \gets 1 - \mu^{H}_i(x)$
+\EndFor
+\State rules $R_1,\dots,R_{2^k}$: all LOW/HIGH combinations over $S$; $w_j(\mathbf{x}) \gets \prod_{i \in S} \mu^{t_{ij}}_i(x_i)$
+\State $A_{nj} \gets w_j(\mathbf{x}_n)/(\sum_l w_l(\mathbf{x}_n) + w_0)$;\; $b_n \gets w_0 z_0/(\sum_l w_l(\mathbf{x}_n) + w_0)$
+\State $\mathbf{z} \gets \arg\min_{\mathbf{z} \in [0,1]^{2^k}} \|A\mathbf{z} + \mathbf{b} - \mathbf{y}\|^2 + \alpha\|\mathbf{z} - \pi\mathbf{1}\|^2$ \Comment{Eq.~(2)}
+\State \Return $S, d, (q, Q), \mathbf{z}$; score $s(\mathbf{x})$ by Eq.~(1)
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

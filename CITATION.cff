@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "Check the premises before imposing the rules: an audit of fuzzy rule models on three student–AI interaction datasets"
-version: 1.2.0
+version: 1.3.0
 doi: 10.5281/zenodo.23940473
 repository-code: "https://github.com/Bangth2026/offloading-fuzzy-asoc"
 date-released: 2026-11-05

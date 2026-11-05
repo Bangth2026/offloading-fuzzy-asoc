@@ -1,0 +1,21 @@
+\input{common}
+\begin{document}
+
+\setcounter{algorithm}{2}
+\begin{algorithm}[H]
+\caption{SM-TSK: monotone consequents}
+\begin{algorithmic}[1]
+\Require $A, \mathbf{b}, \mathbf{y}, \pi, \alpha$ and directions $d_i$ ($i \in S$) from Algorithm 2; SC-TSK solution $\mathbf{z}^0$
+\Ensure consequents $\mathbf{z}$ that respect $d$
+\State $\mathcal{C} \gets \emptyset$
+\For{each $i \in S$ and each rule $j$ whose term on input $i$ is LOW}
+  \State $r \gets$ the rule equal to $j$ except HIGH on input $i$
+  \State $\mathcal{C} \gets \mathcal{C} \cup \{\, d_i (z_r - z_j) \ge 0 \,\}$ \Comment{$|\mathcal{C}| = 3 \cdot 2^{2} = 12$}
+\EndFor
+\State $\mathbf{z} \gets \arg\min_{\mathbf{z} \in [0,1]^{2^k}} \|A\mathbf{z} + \mathbf{b} - \mathbf{y}\|^2 + \alpha\|\mathbf{z} - \pi\mathbf{1}\|^2$ subject to $\mathcal{C}$ \Comment{SLSQP from $\mathbf{z}^0$}
+\State $\mathrm{viol}(\mathbf{z}) \gets \#\{(j, r, i) \in \mathcal{C} : d_i(z_r - z_j) < -10^{-6}\}$
+\State \Return $\mathbf{z}$
+\end{algorithmic}
+\end{algorithm}
+
+\end{document}

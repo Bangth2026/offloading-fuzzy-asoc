@@ -1,0 +1,95 @@
+!TITLE Supplementary material for "Check the Premises Before Imposing the Rules: An Audit of Fuzzy Rule Models on Three Student–AI Interaction Datasets"
+!CENTER Hai Bang Truong
+
+All numbers below are rendered from the statistics files of the public repository ({{S.repo_url}}, release archived at https://doi.org/{{S.vdoi}}). Section and table numbers prefixed with S refer to this document; the others refer to the main paper.
+
+# S1. Study 1 analyses before the audit (E1–E12)
+All analyses in this section are exploratory. The cross-semester analyses use the training semester's 75th percentile of y as threshold; pooled cross-validation uses the pooled 75th percentile ({{S.s1_thr}}).
+
+The expert rule base FR1–FR5 reads four unit-level shares: v, the share of writing requests not followed by an editing or verification turn; u, the share of turns in runs of three or more assignment-specific questions; p, the share of provide-context turns; and e, the share of verification turns. Its consequents are fixed by the author (FR1: v HIGH → risk 1.0; FR4: v LOW and e HIGH → risk 0.0; and so on). It ranks units at chance in pooled five-fold cross-validation (AUC {{S.f_auc}}; {{S.c_auc}} for a crisp version) and across semesters ({{S.ex_p}} and {{S.ex_r}}). As a Łukasiewicz constraint on a Transformer it leaves AUC unchanged (Δ = {{S.imp_d}}, Holm-adjusted p = {{S.imp_p}}). Its main antecedent appears to have the wrong sign in pooled data: v is inversely associated with y (ρ = {{S.v_rho}}, 95% CI {{S.v_lo}} to {{S.v_hi}}). Learning the consequents on the same shares does not help ({{S.oc_auc}}). With log counts of writing requests (W), conceptual questions (C) and provide-context turns (P) and learned consequents, CF-TSK trained on Fall 2024 reaches {{S.cf_p}} on Spring 2025 (98.75% CI {{S.cfci_p.lo}} to {{S.cfci_p.hi}}) against {{S.lr8_p}} for a regression on all eight broad counts, and {{S.cf_r}} in the reverse direction. Moving the input selection inside the training semester gives {{S.nest_p}} and {{S.nest_r}}. In pooled cross-validation an LSTM is the most accurate encoder ({{S.lstm_m}} ± {{S.lstm_sd}} over ten seeds, against {{S.lr_m}} ± {{S.lr_sd}} for the regression and {{S.tf_m}} ± {{S.tf_sd}} for a Transformer); across semesters it reaches {{S.lstmx_p}} and {{S.lstmx_r}}.
+
+!TABLE
+Model | Inputs | Consequents | Fall → Spring AUC | Spring → Fall AUC
+Expert rules FR1–FR5 | Shares v, u, p, e | Author-set | {{S.ex_p}} | {{S.ex_r}}
+EC-TSK | Log counts W, C, P | Author-set directions | {{S.ec_p.e}} | {{S.ec_r.e}}
+CF-TSK (E10) | Log counts W, C, P | Learned | {{S.cf_p}} | {{S.cf_r}}
+CF-TSK, nested selection (E11) | Three counts chosen in training semester | Learned | {{S.nest_p}} | {{S.nest_r}}
+LR8 | Eight broad counts | — | {{S.lr8_p}} | {{S.lr8_r}}
+LR3 (E10 inputs) | Log counts W, C, P | — | {{S.lr3_p}} | {{S.lr3_r}}
+LR3 (E11 inputs) | Nested-selection counts | — | {{S.cmp.primary.lr3}} | {{S.cmp.reverse.lr3}}
+ANFIS-style TSK (E11 inputs) | Nested-selection counts | Learned | {{S.cmp.primary.anfis}} | {{S.cmp.reverse.anfis}}
+Wang–Mendel (E11 inputs) | Nested-selection counts | Learned | {{S.cmp.primary.wang_mendel}} | {{S.cmp.reverse.wang_mendel}}
+EBM (E11 inputs) | Nested-selection counts | — | {{S.cmp.primary.ebm}} | {{S.cmp.reverse.ebm}}
+LSTM (10 seeds, E12) | Turn sequence | — | {{S.lstmx_p}} | {{S.lstmx_r}}
+Assessment group only | One-hot group | — | {{S.grp_p.e}} | {{S.grp_r.e}}
+!END
+!CAP Table S1. Study 1, all cross-semester models. EC-TSK uses consequents z = (1[W HIGH] + 1[C LOW] + 1[P HIGH])/3 taken from the expert rules' directions.
+
+On counts, author-set directions rank units below chance ({{S.ec_p.e}}, CI {{S.ec_p.lo}} to {{S.ec_p.hi}}), and learning the consequents raises AUC by {{S.cfec_p.e}} (CI {{S.cfec_p.lo}} to {{S.cfec_p.hi}}). Adjusting for the preceding unaided exam, CF-TSK keeps a positive coefficient from Fall to Spring ({{S.prior_p.b}}, CI {{S.prior_p.lo}} to {{S.prior_p.hi}}) but not in the reverse direction ({{S.prior_r.b}}, CI {{S.prior_r.lo}} to {{S.prior_r.hi}}). Replacing up to 40% of dialogue-act labels at random leaves the frozen rule base's AUC between {{S.noise_lo}} and {{S.noise_hi}}. The effect of rule constraints on neural encoders is negligible: the interval of the AUC difference lies within ±0.01 for the LSTM in both directions and for the Transformer from Fall to Spring ({{S.con.primary.transformer.d}}, CI {{S.con.primary.transformer.lo}} to {{S.con.primary.transformer.hi}}).
+
+For rule injection into neural encoders we read rule j as "if the antecedent holds, risk is about z_j" and penalise violations of the Łukasiewicz bounds w_j z_j ≤ r ≤ 1 − w_j(1 − z_j) with a hinge loss. A rule that fires fully pins r to z_j; when several rules fire fully with different consequents the bounds conflict, and the loss settles where the summed violation is smallest. Every encoder is also trained with binary cross-entropy, so the constraint is never satisfied exactly. Encoders: Transformer with two layers, two heads, width 32 and an assessment token; LSTM with one layer of width 32; 15 epochs, Adam (10⁻³), batch 32.
+
+Seven planned tests used Spring 2025 as the held-out semester: E10 H1 (CF-TSK non-inferior to LR8), H2 (CF-TSK above chance), H3 (rule constraint improves a Transformer) and H4 (fusion of CF-TSK and LR8 improves on LR8); E11 H1 and H2; and E12 H5 (rule constraint improves an LSTM). Under Bonferroni correction at 0.05/7, E10 H1, H2, H4, E11 H1, H2 and E12 H5 hold and E10 H3 does not; E12 H5 holds with a mean gain of about 0.001 AUC. These decisions are reported for completeness; the plans were not public before the runs.
+
+One step of the audit had to be corrected. A first attempt to remove group effects thresholded the label within each semester × group cell. In Fall 2024 group 2 the cell's 75th percentile is zero, so that rule marks every unit of the cell positive and reintroduces the group effect (results/revision_b_stats.json, key two_by_two). The within-group conclusions of the paper rest only on rank correlations with the continuous y.
+
+# S2. Register of analyses
+!TABLE
+Analysis | Question | Plan committed (UTC) | Result committed | Plan on public host before the run
+E1–E6 | Expert rules as score and constraint; direction check | Rules in code | 4 Nov 06:07 (202374a) | No
+E7–E9 | Outcome-checked rules, learned consequents | 4 Nov 06:11 (41a1252) | 06:37 (1c050ea) | No
+E10 | CF-TSK, cross-semester | 06:42 (9c24f9e) | 06:51 (b03064c) | No
+E11 | E10 with selection inside training semester | 07:09 (46be22b) | 07:11 (d026b38) | No
+E12 | LSTM encoder with CF-TSK constraint | 07:22 (474c5b6) | 07:27 (93b9378) | No
+R1, R1b, R1c | Audit of Study 1 | 07:42, 08:05, 08:08 | 08:16 (0cab512) | No (pushed with results)
+Study 2 | SC-TSK on TutorTrace | 08:27 (be03ee2) | 08:44 (078a270) | Plan on host before result push
+Study 3 | SC-TSK on RECIPE4U | 09:15 (068f0d9) | 09:27 (e4f7282) | Yes (push log)
+R2 | Internal pre-submission review, round 1 | 5 Nov 03:21 (ac28087) | later commits | Yes (push log)
+R3 | Internal pre-submission review, round 2 | 5 Nov 04:28 (0f7c2ee) | later commits | Yes (push log)
+!END
+!CAP Table S2. Commits of every plan and result. The GitHub repository was created at 07:34 UTC on 4 November 2026.
+
+# S3. Sensitivity of SC-TSK to w0 and α
+!TABLE
+w0, α | D1 → D2 | D2 → D1 | D1+D2 → D3 | SW → AW + IRW | AW + IRW → SW
+{% for k in S.sens_keys %}{{k}} | {{S.sens.S2_D1_to_D2[k]}} | {{S.sens.S2_D2_to_D1[k]}} | {{S.sens.S2_D12_to_D3[k]}} | {{S.sens.S3_SW_to_AW_IRW[k]}} | {{S.sens.S3_AW_IRW_to_SW[k]}}
+{% endfor %}!END
+!CAP Table S3. Held-out AUC of SC-TSK for nine settings of the background weight w0 and the prior weight α (R2-G). The paper uses w0 = 0.05, α = 1.
+
+# S4. Revision analyses R3 in detail
+All analyses in this section follow plan PREREG_R3.md and are exploratory.
+
+**Conditional logistic regression by student (R3-A).** Standardised coefficient of each selected input, 95% Wald interval and number of students with both labels.
+
+!TABLE
+Split | Input | Training set | Test set
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{% for inp, d in S.r3[sp].fe.items() %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{inp}} | {{d.train.b}} [{{d.train.lo}}, {{d.train.hi}}], n = {{d.train.n}} | {{d.test.b}} [{{d.test.lo}}, {{d.test.hi}}], n = {{d.test.n}}
+{% endfor %}{% endfor %}!END
+!CAP Table S4. Conditional logistic regression of y on each selected input, by student.
+
+**Stability of the sign check (R3-B).** Over 200 random splits of the training students, the selected set of the single split (seed 0) was chosen {{S.r3.S2_D1_to_D2.stab.same}}, {{S.r3.S2_D2_to_D1.stab.same}} and {{S.r3.S2_D12_to_D3.stab.same}} times in the three Study 2 splits and {{S.r3.S3_SW_to_AW_IRW.stab.same}} and {{S.r3.S3_AW_IRW_to_SW.stab.same}} times in Study 3. Median held-out AUC (2.5th–97.5th percentiles): {% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{{S.r3[sp].stab.med}} ({{S.r3[sp].stab.lo}}–{{S.r3[sp].stab.hi}}){% if not loop.last %}; {% endif %}{% endfor %}. With the stability criterion (eligible in at least 80% of splits), Study 2 selects the same inputs as the single split. In Study 3 SW → AW + IRW only the lagged-label input meets the criterion (essay length before the request is eligible in a share {{S.r3.S3_SW_to_AW_IRW.stab.elig.essay_len_prev}} of the splits, just below the threshold), so the grid is completed with the next-ranked inputs ({{S.r3.S3_SW_to_AW_IRW.stab.spad|join(', ')}}), giving AUC {{S.r3.S3_SW_to_AW_IRW.stab.sauc.e}} (CI {{S.r3.S3_SW_to_AW_IRW.stab.sauc.lo}} to {{S.r3.S3_SW_to_AW_IRW.stab.sauc.hi}}). In AW + IRW → SW the criterion selects {{S.r3.S3_AW_IRW_to_SW.stab.ssel|join(', ')}} (AUC {{S.r3.S3_AW_IRW_to_SW.stab.sauc.e}}).
+
+**Alternative structure partition, Study 2 (R3-C).** Structure without test progress: AUC {{S.r3.S2_D1_to_D2.C.st.e}}, {{S.r3.S2_D2_to_D1.C.st.e}} and {{S.r3.S2_D12_to_D3.C.st.e}}; gain of structure + SC-TSK over it {{S.r3.S2_D1_to_D2.C.h2.e}} (98.33% CI {{S.r3.S2_D1_to_D2.C.h2.lo}} to {{S.r3.S2_D1_to_D2.C.h2.hi}}), {{S.r3.S2_D2_to_D1.C.h2.e}} ({{S.r3.S2_D2_to_D1.C.h2.lo}} to {{S.r3.S2_D2_to_D1.C.h2.hi}}) and {{S.r3.S2_D12_to_D3.C.h2.e}} ({{S.r3.S2_D12_to_D3.C.h2.lo}} to {{S.r3.S2_D12_to_D3.C.h2.hi}}); SC-TSK minus structure {{S.r3.S2_D1_to_D2.C.d.e}} (95% CI {{S.r3.S2_D1_to_D2.C.d.lo}} to {{S.r3.S2_D1_to_D2.C.d.hi}}), {{S.r3.S2_D2_to_D1.C.d.e}} and {{S.r3.S2_D12_to_D3.C.d.e}}.
+
+**Noisy lagged labels, Study 3 (R3-D).** Mean held-out AUC over 20 repetitions (range of SC-TSK in brackets).
+
+!TABLE
+Label error rate | SC-TSK, SW → AW + IRW | Persistence, SW → AW + IRW | SC-TSK, AW + IRW → SW | Persistence, AW + IRW → SW
+{% for e in ['0.1','0.2','0.3'] %}{{e}} | {{S.r3.noise[e].SW_to_AW_IRW.sc}} [{{S.r3.noise[e].SW_to_AW_IRW.sc_min}}, {{S.r3.noise[e].SW_to_AW_IRW.sc_max}}] | {{S.r3.noise[e].SW_to_AW_IRW.markov}} | {{S.r3.noise[e].AW_IRW_to_SW.sc}} [{{S.r3.noise[e].AW_IRW_to_SW.sc_min}}, {{S.r3.noise[e].AW_IRW_to_SW.sc_max}}] | {{S.r3.noise[e].AW_IRW_to_SW.markov}}
+{% endfor %}!END
+!CAP Table S5. Study 3 with earlier production/guidance labels flipped at random.
+
+**Requests without an earlier production request (R3-D).** AW + IRW: {{S.r3.S3_SW_to_AW_IRW.cond.n}} requests, {{S.r3.S3_SW_to_AW_IRW.cond.pos}} production; SC-TSK {{S.r3.S3_SW_to_AW_IRW.cond.sc.e}} (CI {{S.r3.S3_SW_to_AW_IRW.cond.sc.lo}} to {{S.r3.S3_SW_to_AW_IRW.cond.sc.hi}}){% for i, v in S.r3.S3_SW_to_AW_IRW.cond.other.items() %}; {{i}} alone {{v.e}} ({{v.lo}} to {{v.hi}}){% endfor %}. SW: {{S.r3.S3_AW_IRW_to_SW.cond.n}} requests, {{S.r3.S3_AW_IRW_to_SW.cond.pos}} production; SC-TSK {{S.r3.S3_AW_IRW_to_SW.cond.sc.e}} (CI {{S.r3.S3_AW_IRW_to_SW.cond.sc.lo}} to {{S.r3.S3_AW_IRW_to_SW.cond.sc.hi}}){% for i, v in S.r3.S3_AW_IRW_to_SW.cond.other.items() %}; {{i}} alone {{v.e}} ({{v.lo}} to {{v.hi}}){% endfor %}.
+
+**Weakly supported rules with α = N/10 (R3-E).**
+
+!TABLE
+Split | α | Rule (LOW/HIGH per input) | Support | z (α = 1) | z (α = N/10) | Base rate
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{% for c in S.r3[sp].aN.low %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{S.r3[sp].aN.alpha}} | {{c.rule|join('/')}} | {{c.n}} | {{c.z1}} | {{c.zN}} | {{S.r3[sp].aN.base}}
+{% endfor %}{% endfor %}!END
+!CAP Table S6. Consequents of rules with fewer than ten training cases at firing degree ≥ 0.5.
+
+**Within-student correlation of whole scores, Study 2 (R3-F).** Structure / all-feature regression / SC-TSK: D2 {{S.r3.S2_D1_to_D2.wss.structure_only.r}} / {{S.r3.S2_D1_to_D2.wss.lr_all_behaviour.r}} / {{S.r3.S2_D1_to_D2.wss.sc_tsk.r}}; D1 {{S.r3.S2_D2_to_D1.wss.structure_only.r}} / {{S.r3.S2_D2_to_D1.wss.lr_all_behaviour.r}} / {{S.r3.S2_D2_to_D1.wss.sc_tsk.r}}; D3 {{S.r3.S2_D12_to_D3.wss.structure_only.r}} / {{S.r3.S2_D12_to_D3.wss.lr_all_behaviour.r}} / {{S.r3.S2_D12_to_D3.wss.sc_tsk.r}}.
+
+**Output monotonicity per input (R3-F).** Share of test cases (%) where a small increase of the input moves the SC-TSK output against its selected direction: {% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}}: {% for i, v in S.r3[sp].mono.per.items() %}{{i}} {{v}}{% if not loop.last %}, {% endif %}{% endfor %}{% if not loop.last %}; {% endif %}{% endfor %}. SM-TSK: 0 in every case.
+

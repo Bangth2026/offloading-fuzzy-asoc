@@ -1,8 +1,8 @@
 {
   "title": "Check the premises before imposing the rules: an audit of fuzzy rule models on three student–AI interaction datasets (code, analysis plans, statistics)",
   "upload_type": "software",
-  "version": "1.2.0",
-  "description": "Version 1.2.0. Code, time-stamped analysis plans (PREREG_*.md, each committed before its run; push order documented in the manuscript) and statistics files for a three-check audit of fuzzy (TSK) rule models: antecedent signs within structural cells and within students, trivial baselines (structure, label persistence, student propensity), and cross-cohort transfer. Study 1 (StudyChat) shows that the offloading-risk proxy is dominated by assessment-group structure; the behavioural conclusions of v1.0.0 are withdrawn. Study 2 (TutorTrace) and Study 3 (RECIPE4U) evaluate a sign-checked TSK classifier and a monotone variant (SM-TSK) for help requests. Revision R2 adds persistence and propensity baselines, within-student checks, within-course cross-validation, equivalence tests and sensitivity analyses. No third-party data are redistributed.",
+  "version": "1.3.0",
+  "description": "Version 1.3.0. Code, time-stamped analysis plans (PREREG_*.md, each committed before its run) and statistics files for a three-check audit of fuzzy (TSK) rule models: antecedent signs within structural cells and within students, trivial baselines (structure, label persistence, student propensity), and cross-cohort transfer. Study 1 (StudyChat), Study 2 (TutorTrace), Study 3 (RECIPE4U). Revision R3 adds conditional logistic within-student checks, stability of the sign check over 200 splits, an alternative structure partition, noisy lagged labels, a support-scaled prior, output monotonicity of SC-TSK and SM-TSK, and a validation of the audit on simulated data. All analyses are exploratory. No third-party data are redistributed.",
   "creators": [
     {
       "name": "Truong, Hai Bang",
