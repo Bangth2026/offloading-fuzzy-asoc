@@ -5,10 +5,10 @@
 
 ## Highlights
 - Readable fuzzy rules on student–AI logs can encode course structure, not behaviour.
-- The audit gives each check a pass, fail or inconclusive outcome and one verdict.
+- An audit gives each of three checks a pass, fail or inconclusive outcome.
 - Monotone consequents make the TSK output provably monotone in each selected input.
-- A programming rule base passes all checks in one direction; two others are open.
-- In EFL writing and for a proxy of offloading risk, the verdicts are inconclusive.
+- A programming rule base passes all checks in one transfer direction only.
+- Offloading-risk and EFL-writing rule bases receive inconclusive verdicts.
 
 ## Abstract
 Fuzzy rule bases suit models of how students use large language model assistants, because instructors want readable reasons, but a rule base can encode the structure of a course, a student's propensity or the persistence of a label while its text describes behaviour. We propose an audit for zero-order Takagi–Sugeno–Kang (TSK) rule bases with three checks, each giving a pass, fail or inconclusive outcome: antecedent signs within structural cells and within students, the gain over a combined baseline of structure, persistence and propensity, and transfer to a new cohort. Linear constraints make the consequents, and provably the output, monotone in the selected directions, and rule support, sign violations and output monotonicity show where a rule table would mislead. In simulations, the audit rarely calls a confounded input behavioural and detects within-student effects of moderate size when sessions are long, including under persistence and under every departure from its assumptions that we tried except a non-monotone effect. On StudyChat, a model of assessment group alone ranks student–assessment units better than a TSK model of offloading risk ({{S.grp_p.e}} and {{S.grp_r.e}} against {{S.cf_p}} and {{S.cf_r}}), and with that structure removed no behavioural signal can be shown. On TutorTrace, a TSK classifier of answer-seeking queries passes all three checks from the first to the second deployment, adding {{S.r5.S2_D1_to_D2.sc.gain.e}} AUC to the baselines, while the reverse direction and a new task are inconclusive. On RECIPE4U the verdict is inconclusive, with only the lagged label keeping its sign within students. All analyses are exploratory.
