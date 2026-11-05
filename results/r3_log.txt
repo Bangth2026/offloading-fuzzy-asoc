@@ -1,0 +1,11 @@
+S2 D1_to_D2 done
+S2 D2_to_D1 done
+S2 D12_to_D3 done
+S3 SW_to_AW_IRW done
+S3 AW_IRW_to_SW done
+S3 noise done
+S0 {'reps': 200, 'x1_selected': 1.0, 'naive_behavioural': 0.995, 'audit_behavioural': 0.0}
+S1 {'reps': 200, 'x1_selected': 1.0, 'naive_behavioural': 1.0, 'audit_behavioural': 0.005}
+S2 {'reps': 200, 'x1_selected': 1.0, 'naive_behavioural': 1.0, 'audit_behavioural': 1.0}
+S3 {'reps': 200, 'x1_selected': 1.0, 'naive_behavioural': 1.0, 'audit_behavioural': 0.0}
+FINISHED

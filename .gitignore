@@ -43,3 +43,6 @@ manuscript_A/build/
 !results/r2_stats.json
 !results/r2_log.txt
 !results/group_means.json
+!results/r3_stats.json
+!results/r3_synthetic.json
+!results/r3_log.txt
