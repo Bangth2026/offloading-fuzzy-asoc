@@ -8,7 +8,7 @@ Code, time-stamped analysis plans and statistics files for the manuscript *Check
 
 - v1.0.0 (`10.5281/zenodo.23940474`): earlier draft on StudyChat only. Its behavioural conclusions are withdrawn.
 - v1.1.0 (`10.5281/zenodo.23941973`): audit of Study 1 (R1–R1c) and Study 2 on TutorTrace.
-- v1.2.0: Study 3 on RECIPE4U and revision R2 after an internal review. All versions: `10.5281/zenodo.23940473`.
+- v1.2.0 (`10.5281/zenodo.23969402`): Study 3 on RECIPE4U and revision R2 after an internal review. All versions: `10.5281/zenodo.23940473`.
 
 ## What the audit found
 

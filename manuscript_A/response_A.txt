@@ -42,7 +42,7 @@ The review was thorough and changed the paper. All new analyses (R2-A to R2-H) w
 13. Section 4.1 states that the threshold ({{S.s1_thr}}) is computed on all y, including the {{S.s1_zero_share}}% clipped to zero.
 14. Section 4.3 gives the cell counts and names the statistics file and key.
 15. [14] has no arXiv or DOI identifier that we could find; the reference now says so and gives the access date. The other identifiers were checked: [15] arXiv:2608.26184, [17] arXiv:2602.18807 and [24] arXiv:2604.08263. [10] (Lou et al., KDD 2013) is the archival reference for the EBM/GA2M model and is cited next to [11].
-16. The Data availability statement names the release (v1.2.0), and the cover letter does the same. The concept DOI resolves to the latest release, and the version DOI for v1.2.0 will be cited once Zenodo issues it.
+16. The Data availability statement names the release (v1.2.0), and the cover letter does the same. The paper now cites the version DOI of v1.2.0 (https://doi.org/{{S.vdoi}}), whose archive contains every commit in Table 1, alongside the concept DOI for all versions.
 17. The long sentences in the abstract have been split. The abstract is now 227 words.
 
 # Notes B.3 and B.4

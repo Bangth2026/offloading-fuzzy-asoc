@@ -260,7 +260,7 @@ Seven tests used Spring 2025 as the held-out semester: E10 H1 (CF-TSK non-inferi
 
 **Funding.** This research received no specific grant from funding agencies in the public, commercial or not-for-profit sectors.
 
-**Data availability.** StudyChat [2] is available at huggingface.co/datasets/wmcnicho/StudyChat after accepting its terms. TutorTrace [15] is available at github.com/divadbaroon/TutorTrace_dataset_and_benchmark (branch uist). RECIPE4U [16] is available for research use through its authors' consent form. No data are redistributed. Code, analysis plans and all statistics files are openly available at {{S.repo_url}} (release v1.2.0) and archived on Zenodo (https://doi.org/{{S.doi}}); the commit history records the order of every plan and result in Table 1.
+**Data availability.** StudyChat [2] is available at huggingface.co/datasets/wmcnicho/StudyChat after accepting its terms. TutorTrace [15] is available at github.com/divadbaroon/TutorTrace_dataset_and_benchmark (branch uist). RECIPE4U [16] is available for research use through its authors' consent form. No data are redistributed. Code, analysis plans and all statistics files are openly available at {{S.repo_url}}. The version used in this paper is release v1.2.0, archived on Zenodo as https://doi.org/{{S.vdoi}} (all versions: https://doi.org/{{S.doi}}); the commit history records the order of every plan and result in Table 1.
 
 **Ethics.** The study is a secondary analysis of three de-identified datasets collected by their authors under institutional review with informed consent; RECIPE4U was obtained under its authors' research-use terms. Saigon International University does not require separate approval for secondary analysis of anonymised data.
 

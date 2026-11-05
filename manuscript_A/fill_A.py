@@ -133,8 +133,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo-url", default="https://github.com/Bangth2026/offloading-fuzzy-asoc")
     ap.add_argument("--doi", default="10.5281/zenodo.23940473")
+    ap.add_argument("--vdoi", default="10.5281/zenodo.23969402")  # version DOI of release v1.2.0
     a = ap.parse_args()
     S = context(a.repo_url, a.doi)
+    S["vdoi"] = a.vdoi
     env = Environment(undefined=StrictUndefined, keep_trailing_newline=True)
     out = os.path.join(HERE, "build"); os.makedirs(out, exist_ok=True)
     for name in [n for n in ("manuscript_A", "cover_letter_A", "response_A") if os.path.exists(os.path.join(HERE, f"{n}.txt"))]:
