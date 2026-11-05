@@ -156,6 +156,41 @@ def context(repo_url, doi):
     syn = json.load(open(os.path.join(ROOT, "results/r3_synthetic.json")))
     R3["syn"] = {k: {m: f"{100 * v:.1f}" for m, v in o.items() if m != "reps"} | {"reps": o["reps"]} for k, o in syn.items()}
     S["r3"] = R3
+
+    # --- R4 (PREREG_R4.md)
+    r4 = json.load(open(os.path.join(ROOT, "results/r4_stats.json")))
+    R4 = {}
+    def gp(g):
+        o = {"auc": ci(g["auc"])}
+        for b in ("structure", "persistence", "propensity"):
+            o[b] = ci(g[b]); o[b]["pass"] = g[b][1][0] > 0
+        o["all2"] = all(g[b][1][0] > 0 for b in ("structure", "persistence", "propensity"))
+        return o
+    for st_, keys in (("S2", ("D1_to_D2", "D2_to_D1", "D12_to_D3")), ("S3", ("SW_to_AW_IRW", "AW_IRW_to_SW"))):
+        for k in keys:
+            o = r4[st_][k]; q = {"sel": o["selected"]}
+            for m in ("sc_gaps", "sm_gaps", "tsk3", "mono_gbm"):
+                q[m] = gp(o[m])
+            q["scw"] = gp(o["scw"]); q["scw"]["sel"] = o["scw"]["selected"]; q["scw"]["same"] = o["scw"]["selected"] == o["selected"]
+            q["scw"]["nelig"] = len(o["scw"]["eligible"])
+            c = o["calibration"]
+            q["cal"] = {"bt": f2(c["base_rate_train"]), "bte": f2(c["base_rate_test"])}
+            for m in ("sc_tsk", "sm_tsk"):
+                q["cal"][m] = {"brier": f3(c[m]["brier"]), "ece": f3(c[m]["ece"]), "brier_base": f3(c[m]["brier_base"])}
+            q["smz"] = [f2(z) for z in o["sm_z"]]
+            for m in ("no_turns", "bagged"):
+                if m in o:
+                    q[m] = gp(o[m]); q[m]["sel"] = o[m].get("selected"); q[m]["pad"] = o[m].get("padded")
+            R4[f"{st_}_{k}"] = q
+    S["r4"] = R4
+    S["sup2"] = r2["S2"]["D1_to_D2"]["cell_support"]; S["sup3"] = r2["S3"]["SW_to_AW_IRW"]["cell_support"]
+    syn4 = json.load(open(os.path.join(ROOT, "results/r4_synthetic.json")))
+    S["syn4"] = {f"{o['confound']}_{o['beta']}_{o['requests']}": {k: (f"{100 * v:.0f}" if isinstance(v, float) and k not in ("beta",) else v) for k, v in o.items()} for o in syn4}
+    S["syn4_noise_split"] = f"{100 * min(o['noise_eligible_split'] for o in syn4):.0f}–{100 * max(o['noise_eligible_split'] for o in syn4):.0f}"
+    S["syn4_noise_within"] = f"{100 * min(o['noise_eligible_within'] for o in syn4):.0f}–{100 * max(o['noise_eligible_within'] for o in syn4):.0f}"
+    nab = [o["naive"] for o in syn4 if o["beta"] == 0 and o["confound"] in ("A", "B")]
+    S["syn4_naive_ab"] = f"{100 * min(nab):.0f}–{100 * max(nab):.0f}"
+    S["syn4_fp_max"] = f"{100 * max(o['all_checks'] for o in syn4 if o['beta'] == 0):.0f}"
     sens_src = {f"S2_{k}": r2["S2"][k]["sensitivity"] for k in ("D1_to_D2", "D2_to_D1", "D12_to_D3")}
     sens_src.update({f"S3_{k}": r2["S3"][k]["sensitivity"] for k in ("SW_to_AW_IRW", "AW_IRW_to_SW")})
     S["sens_keys"] = list(sens_src["S2_D1_to_D2"].keys())

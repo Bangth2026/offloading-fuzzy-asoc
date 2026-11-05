@@ -4,11 +4,26 @@ const {Document,Packer,Paragraph,TextRun,ImageRun,Table,TableRow,TableCell,Width
 const [src,out]=process.argv.slice(2);
 const L=fs.readFileSync(src,'utf8').split('\n');
 const F="Times New Roman";
+function mathRuns(src,base){
+  // $...$ : letters italic, _x/_{..} subscript, ^x/^{..} superscript
+  const out=[]; let k=0;
+  const push=(t,o)=>{ for(const piece of t.split(/([A-Za-zα-ωΑ-Ωμπρ]+)/)){ if(!piece) continue;
+      const it=/^[A-Za-zα-ωμπρ]+$/.test(piece) && !/^(AUC|SC|SM|TSK|LOW|HIGH|MED|max|min|log|sign|clip|argmin|exp)$/.test(piece);
+      out.push(new TextRun({text:piece,font:F,italics:it,...base,...o})); } };
+  while(k<src.length){
+    const c=src[k];
+    if(c==='_'||c==='^'){ let t; if(src[k+1]==='{'){ const e=src.indexOf('}',k+2); t=src.slice(k+2,e); k=e+1;} else { t=src[k+1]; k+=2; }
+      push(t, c==='_'?{subScript:true}:{superScript:true}); continue; }
+    let e=k; while(e<src.length && src[e]!=='_' && src[e]!=='^') e++;
+    push(src.slice(k,e),{}); k=e; }
+  return out; }
 function runs(text,base={}){
-  const res=[]; const re=/(\*\*[^*]+\*\*|\[TBD[^\]]*\]|\[Author[^\]]*\])/g; let last=0,m;
+  const res=[]; const re=/(\*\*[^*]+\*\*|\$[^$]+\$|\*[^*\s][^*]*\*|\[TBD[^\]]*\]|\[Author[^\]]*\])/g; let last=0,m;
   while((m=re.exec(text))){ if(m.index>last) res.push(new TextRun({text:text.slice(last,m.index),font:F,...base}));
     const s=m[0];
-    if(s.startsWith('**')) res.push(new TextRun({text:s.slice(2,-2),bold:true,font:F,...base}));
+    if(s.startsWith('**')) res.push(...runs(s.slice(2,-2),{...base,bold:true}));
+    else if(s.startsWith('$')) res.push(...mathRuns(s.slice(1,-1),base));
+    else if(s.startsWith('*')) res.push(new TextRun({text:s.slice(1,-1),italics:true,font:F,...base}));
     else if(s.startsWith('[TBD')) res.push(new TextRun({text:s,font:F,...base}));
     else res.push(new TextRun({text:s,font:F,color:'C00000',italics:true,...base}));
     last=m.index+s.length;}
@@ -30,6 +45,9 @@ while(i<L.length){
   else if(l.startsWith('!REF ')) body.push(P({indent:{left:480,hanging:480},spacing:{after:60,line:276},children:runs(l.slice(5),{size:22})}));
   else if(l.startsWith('!CAP ')) body.push(P({alignment:AlignmentType.CENTER,spacing:{after:240,line:276},children:[new TextRun({text:l.slice(5),italics:true,font:F,size:20})]}));
   else if(l.startsWith('!PLACEHOLDER ')) body.push(P({alignment:AlignmentType.CENTER,border:{top:{style:BorderStyle.DASHED,size:6,color:'C00000'},bottom:{style:BorderStyle.DASHED,size:6,color:'C00000'},left:{style:BorderStyle.DASHED,size:6,color:'C00000'},right:{style:BorderStyle.DASHED,size:6,color:'C00000'}},spacing:{before:240,after:120},children:[new TextRun({text:'[FIGURE PLACEHOLDER] '+l.slice(13),font:F,color:'C00000',bold:true})]}));
+  else if(l.startsWith('!MATH ')){
+    const path=l.slice(6).trim(); const [w,h]=pngSize(path); const ww=Math.min(600,Math.round(w*96/300*1.09)), hh=Math.round(ww*h/w);
+    body.push(P({alignment:AlignmentType.CENTER,spacing:{before:120,after:120,line:240,lineRule:d.LineRuleType.AUTO},children:[new ImageRun({type:'png',data:fs.readFileSync(path),transformation:{width:ww,height:hh}})]}));}
   else if(l.startsWith('!FIG ')){
     const [path,cap]=l.slice(5).split(' | '); const [w,h]=pngSize(path); const ww=path.includes('membership')?400:600, hh=Math.round(ww*h/w);
     body.push(P({alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:200,line:240,lineRule:d.LineRuleType.AUTO},children:[new ImageRun({type:'png',data:fs.readFileSync(path),transformation:{width:ww,height:hh}})]}));

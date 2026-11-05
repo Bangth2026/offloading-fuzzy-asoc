@@ -11,7 +11,7 @@
 \State split the training students at random into halves $H_1, H_2$
 \For{each candidate $c$ with at least two distinct values}
   \State $a_c \gets \mathrm{AUC}(c, y)$;\; $a_{c,1}, a_{c,2} \gets$ AUC on $H_1$, $H_2$ ($0.5$ if a half has one class)
-  \State $\mathrm{eligible}(c) \gets \big[\operatorname{sign}(a_{c,1} - 0.5) = \operatorname{sign}(a_{c,2} - 0.5)\big] \wedge \big[a_{c,1} \neq 0.5\big]$ \Comment{Check 1}
+  \State $\mathrm{eligible}(c) \gets \big[\operatorname{sign}(a_{c,1} - 0.5) = \operatorname{sign}(a_{c,2} - 0.5)\big] \wedge \big[a_{c,1} \neq 0.5\big]$ \Comment{stability filter}
   \State $d_c \gets \operatorname{sign}(a_c - 0.5)$
 \EndFor
 \State $S \gets$ the $k$ eligible candidates with the largest $|a_c - 0.5|$

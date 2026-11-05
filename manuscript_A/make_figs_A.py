@@ -9,6 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, "..
 st = json.load(open(os.path.join(ROOT, "results/paper_stats_fuzzy.json")))
 s2 = json.load(open(os.path.join(ROOT, "study2/results_s2.json")))
 r2 = json.load(open(os.path.join(ROOT, "results/r2_stats.json")))
+r4 = json.load(open(os.path.join(ROOT, "results/r4_stats.json")))
 BLUE, ORANGE, INK, MUTED, GRID = "#2a78d6", "#eb6834", "#1f2328", "#5b636e", "#d9dde3"
 plt.rcParams.update({"font.size": 9, "axes.edgecolor": MUTED, "xtick.color": MUTED, "ytick.color": INK})
 OUT = os.path.join(HERE, "figs")
@@ -20,20 +21,16 @@ def clean(a):
 
 
 # ---------------------------------------------------------------- Figure 1: audit protocol
-fig, ax = plt.subplots(figsize=(10, 3.1)); ax.axis("off"); ax.set_xlim(0, 10); ax.set_ylim(-0.1, 3)
-boxes = [(0.1, "Rule model\n(expert or learned TSK)", "#eef3fb"),
+fig, ax = plt.subplots(figsize=(10, 1.9)); ax.axis("off"); ax.set_xlim(0, 10); ax.set_ylim(0.85, 2.5)
+boxes = [(0.1, "Rule model\n(author-specified or\nlearned TSK)", "#eef3fb"),
          (2.55, "Check 1\nSign of each antecedent\nwithin cells and students", "#fff4ec"),
          (5.0, "Check 2\nTrivial baselines: structure,\npersistence, propensity", "#fff4ec"),
          (7.45, "Check 3\nTransfer across cohorts\nunder a committed plan", "#fff4ec")]
 for x, t, c in boxes:
     ax.add_patch(FancyBboxPatch((x, 1.0), 2.25, 1.35, boxstyle="round,pad=0.04", fc=c, ec=MUTED, lw=1))
-    ax.text(x + 1.125, 1.675, t, ha="center", va="center", fontsize=9, color=INK)
+    ax.text(x + 1.125, 1.675, t, ha="center", va="center", fontsize=10.5, color=INK)
 for x in (2.35, 4.8, 7.25):
     ax.annotate("", xy=(x + 0.2, 1.675), xytext=(x, 1.675), arrowprops=dict(arrowstyle="->", color=MUTED, lw=1.4))
-notes = [(3.675, "S1: FR1 sign vanishes within groups\nS2: signs hold within students\nS3: lagged-label input holds"), (6.125, "S1: structure beats all models\nS2: structure explains much the same\nS3: persistence matches rules"),
-         (8.575, "S1: transfers via structure\nS2, S3: transfer holds")]
-for x, t in notes:
-    ax.text(x, 0.42, t, ha="center", va="center", fontsize=7.5, color=MUTED, style="italic")
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig1_audit.png"), dpi=300, bbox_inches="tight"); plt.close()
 
 # ---------------------------------------------------------------- Figure 2: StudyChat audit
@@ -50,10 +47,10 @@ a.set_ylabel("share labelled high-risk"); a.legend(frameon=False, fontsize=8); c
 a.set_title("(a) Label prevalence by assessment group", loc="left", fontsize=9.5)
 a = ax[1]
 rows = [("Group only", R1["R1B"]["primary"]["group_only"], R1["R1B"]["reverse"]["group_only"]),
-        ("CF-TSK, learned (E10 inputs)", R1["R1A"]["primary"]["cf_tsk_same_inputs"], R1["R1A"]["reverse"]["cf_tsk_same_inputs"]),
-        ("EC-TSK, author directions", R1["R1A"]["primary"]["ec_tsk"], R1["R1A"]["reverse"]["ec_tsk"]),
-        ("LR, 3 inputs (E11)", R1["R1D"]["primary"]["lr3"]["auc"], R1["R1D"]["reverse"]["lr3"]["auc"]),
-        ("ANFIS-style TSK (E11)", R1["R1D"]["primary"]["anfis"]["auc"], R1["R1D"]["reverse"]["anfis"]["auc"])]
+        ("CF-TSK (learned consequents)", R1["R1A"]["primary"]["cf_tsk_same_inputs"], R1["R1A"]["reverse"]["cf_tsk_same_inputs"]),
+        ("TSK, author-set consequents", R1["R1A"]["primary"]["ec_tsk"], R1["R1A"]["reverse"]["ec_tsk"]),
+        ("LR, 3 counts", R1["R1D"]["primary"]["lr3"]["auc"], R1["R1D"]["reverse"]["lr3"]["auc"]),
+        ("ANFIS-style TSK, 3 counts", R1["R1D"]["primary"]["anfis"]["auc"], R1["R1D"]["reverse"]["anfis"]["auc"])]
 for i, (lab, p, r) in enumerate(rows[::-1]):
     for v, off, col, mk in ((p, -0.13, BLUE, "o"), (r, 0.13, ORANGE, "s")):
         a.plot(v[1], [i + off] * 2, color=col, lw=2, solid_capstyle="round")
@@ -89,7 +86,7 @@ for key, lab, col, mk, off in splits:
 a.axvline(0.5, color=MUTED, ls="--", lw=1); a.set_yticks(range(len(models)), [m[1] for m in models[::-1]])
 a.set_xlabel("AUC, dependent vs guided query (95% CI)"); a.set_xlim(0.45, 0.85); clean(a)
 a.legend(frameon=False, fontsize=8, loc="lower right"); a.set_title("(a) Held-out deployments", loc="left", fontsize=9.5)
-b = ax[1]; o = s2["primary_D1_to_D2"]; sel = o["selected"]; z = [c["z"] for c in o["consequents"]]
+b = ax[1]; o = s2["primary_D1_to_D2"]; sel = o["selected"]; z = r4["S2"]["D1_to_D2"]["sm_z"]
 SUP2 = r2["S2"]["D1_to_D2"]["cell_support"]
 M = np.array(z).reshape(2, 4)    # rows: first input LOW/HIGH; cols: (second, third) LL, LH, HL, HH
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
@@ -106,8 +103,8 @@ n1, n2, n3 = (short.get(s, s) for s in sel)
 b.set_yticks([0, 1], [f"{n1} LOW", f"{n1} HIGH"])
 b.set_xticks(range(4), ["ins L\ndur L", "ins L\ndur H", "ins H\ndur L", "ins H\ndur H"], fontsize=8)
 b.set_xlabel(f"ins = {n2}, dur = {n3}", fontsize=8, color=MUTED)
-fig.colorbar(im, ax=b, shrink=0.8).set_label("P(dependent) consequent")
-b.set_title(f"(b) SC-TSK rule table, trained on D1 (base rate {o['train_dependent_rate']:.2f})", loc="left", fontsize=9.5)
+fig.colorbar(im, ax=b, shrink=0.8).set_label("consequent (relative score)")
+b.set_title(f"(b) SM-TSK rule table, trained on D1 (base rate {o['train_dependent_rate']:.2f})", loc="left", fontsize=9.5)
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig3_tutortrace.png"), dpi=300, bbox_inches="tight"); plt.close()
 print("figures written")
 
@@ -124,7 +121,7 @@ for key, lab, col, mk, off in splits3:
 a.axvline(0.5, color=MUTED, ls="--", lw=1); a.set_yticks(range(len(models)), [m[1] for m in models[::-1]])
 a.set_xlabel("AUC, production vs guidance request (95% CI)"); a.set_xlim(0.3, 0.85); clean(a)
 a.legend(frameon=False, fontsize=8, loc="lower left"); a.set_title("(a) Held-out courses", loc="left", fontsize=9.5)
-b = ax[1]; o = s3["primary_SW_to_AW_IRW"]; z = [c["z"] for c in o["consequents"]]; SUP3 = r2["S3"]["SW_to_AW_IRW"]["cell_support"]
+b = ax[1]; o = s3["primary_SW_to_AW_IRW"]; z = r4["S3"]["SW_to_AW_IRW"]["sm_z"]; SUP3 = r2["S3"]["SW_to_AW_IRW"]["cell_support"]
 M = np.array(z).reshape(2, 4)
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
 for r in range(2):
@@ -138,7 +135,39 @@ for r in range(2):
 b.set_yticks([0, 1], ["earlier production\nrequests: none", "earlier production\nrequests: some"])
 b.set_xticks(range(4), ["reply L\nturns L", "reply L\nturns H", "reply H\nturns L", "reply H\nturns H"], fontsize=8)
 b.set_xlabel("reply = mean length of earlier ChatGPT replies, turns = earlier turns in session", fontsize=8, color=MUTED)
-fig.colorbar(im, ax=b, shrink=0.8).set_label("P(production) consequent")
-b.set_title(f"(b) SC-TSK rule table, trained on SW (base rate {o['train_dependent_rate']:.2f})", loc="left", fontsize=9.5)
+fig.colorbar(im, ax=b, shrink=0.8).set_label("consequent (relative score)")
+b.set_title(f"(b) SM-TSK rule table, trained on SW (base rate {o['train_dependent_rate']:.2f})", loc="left", fontsize=9.5)
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig4_recipe4u.png"), dpi=300, bbox_inches="tight"); plt.close()
 print("figure 4 written")
+
+# ---------------------------------------------------------------- Figure 5: simulation (R4-E)
+syn = json.load(open(os.path.join(ROOT, "results/r4_synthetic.json")))
+fig, ax = plt.subplots(1, 3, figsize=(11, 3.3), sharey=True)
+names = {"A": "(a) Structural confound", "B": "(b) Propensity confound", "C": "(c) Persistence confound"}
+betas = [0.0, 0.25, 0.5, 1.0]
+for a, c in zip(ax, ("A", "B", "C")):
+    for req, col, mk in (("3-5", BLUE, "o"), ("6-10", ORANGE, "s")):
+        rows = {o["beta"]: o for o in syn if o["confound"] == c and o["requests"] == req}
+        a.plot(betas, [100 * rows[b]["all_checks"] for b in betas], marker=mk, color=col, lw=2, label=f"audit, {req} requests")
+        a.plot(betas, [100 * rows[b]["naive"] for b in betas], ls="--", color=col, lw=1.2, alpha=0.8, label=f"naive transfer, {req}")
+    a.set_title(names[c], loc="left", fontsize=9.5); a.set_xticks(betas); a.set_xlabel("within-student effect β (0 = no effect)")
+    a.set_ylim(-3, 103); clean(a)
+ax[0].set_ylabel("% of replications called behavioural")
+ax[0].legend(frameon=False, fontsize=7.5, loc="center right")
+plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig5_simulation.png"), dpi=300, bbox_inches="tight"); plt.close()
+print("figure 5 written")
+
+# ---------------------------------------------------------------- Figure S1: reliability diagrams (R4-D)
+fig, ax = plt.subplots(1, 5, figsize=(13, 2.9), sharey=True)
+splits = [("S2", "D1_to_D2", "D1 → D2"), ("S2", "D2_to_D1", "D2 → D1"), ("S2", "D12_to_D3", "D1+D2 → D3"),
+          ("S3", "SW_to_AW_IRW", "SW → AW+IRW"), ("S3", "AW_IRW_to_SW", "AW+IRW → SW")]
+for a, (st_, k, lab) in zip(ax, splits):
+    c = r4[st_][k]["calibration"]
+    for m, col, mk in (("sc_tsk", BLUE, "o"), ("sm_tsk", ORANGE, "s")):
+        rel = c[m]["reliability"]
+        a.plot([r["mean_p"] for r in rel], [r["obs"] for r in rel], marker=mk, color=col, lw=1.5, ms=4, label=m.replace("_", "-").upper())
+    a.plot([0, 1], [0, 1], color=MUTED, ls=":", lw=1); a.axhline(c["base_rate_test"], color=GRID, lw=1)
+    a.set_title(lab, fontsize=9); a.set_xlim(0, 1); a.set_ylim(0, 1); a.set_xlabel("mean score in bin"); clean(a)
+ax[0].set_ylabel("observed share positive"); ax[0].legend(frameon=False, fontsize=7.5)
+plt.tight_layout(); plt.savefig(os.path.join(OUT, "figS1_reliability.png"), dpi=300, bbox_inches="tight"); plt.close()
+print("figure S1 written")

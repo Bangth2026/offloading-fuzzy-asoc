@@ -6,21 +6,21 @@
 \begin{algorithmic}[1]
 \Require training cohort $D_{\mathrm{tr}}$, test cohort $D_{\mathrm{te}}$; label $y$; behavioural inputs $X$; structural cells $G$; student identifier $u$; written plan $P$ (hypotheses, margins, interval levels)
 \Ensure within-sample associations, baseline gaps, transfer decisions
-\State push $P$ to a public host before $f$ or any baseline is fitted
+\State commit $P$ and push it to a public host before $f$ or any baseline is fitted \Comment{verifiable only if pushed}
 \For{each input $x$ used by $f$, with rule direction $d_x \in \{-1,+1\}$} \Comment{Check 1}
-  \State $\rho_G(x) \gets$ Spearman correlation of within-cell ranks of $x$ and $y$
+  \State $\rho_G(x) \gets$ Spearman correlation of within-cell ranks of $x$ and $y$ (if cells other than students exist)
   \State $\rho_u(x) \gets$ Spearman correlation of within-student ranks of $x$ and $y$
   \State interval of each $\rho$: student-cluster bootstrap, $B = 2000$
-  \State $x$ is \emph{supported} if both intervals exclude $0$ with sign $d_x$; it \emph{contradicts} its rule if either excludes $0$ with sign $-d_x$
+  \State Check 1 passes for $x$ if every interval excludes $0$ with sign $d_x$; $x$ \emph{contradicts} its rule if one excludes $0$ with sign $-d_x$
 \EndFor
 \State $b_S \gets$ logistic regression on structural variables, fitted on $D_{\mathrm{tr}}$ \Comment{Check 2}
 \State $b_M \gets y$ of the previous request in the session ($0.5$ if none)
 \State $b_P \gets$ share of $y = 1$ among the student's earlier requests ($0.5$ if none)
 \For{$b \in \{b_S, b_M, b_P\}$}
-  \State $\Delta_b \gets \mathrm{AUC}(f) - \mathrm{AUC}(b)$ on $D_{\mathrm{te}}$, with interval
+  \State $\Delta_b \gets \mathrm{AUC}(f) - \mathrm{AUC}(b)$ on $D_{\mathrm{te}}$ ($b_S$: AUC of $b_S$ with $f$ added minus AUC of $b_S$); Check 2 passes against $b$ if the lower bound of $\Delta_b > 0$
 \EndFor
-\State fit $f$ once on $D_{\mathrm{tr}}$, score $D_{\mathrm{te}}$ once, apply the decision rules of $P$ \Comment{Check 3}
-\State \Return $\rho_G, \rho_u, \Delta, $ decisions; read $f$ as behavioural only if its inputs are supported and every lower bound of $\Delta_b$ exceeds $0$
+\State fit $f$ once on $D_{\mathrm{tr}}$, score $D_{\mathrm{te}}$ once; Check 3 passes if the lower bound of $\mathrm{AUC}(f) > 0.5$ under a plan pushed before the run \Comment{Check 3}
+\State \Return the verdict of each check separately; call $f$ behavioural only if all three checks pass
 \end{algorithmic}
 \end{algorithm}
 

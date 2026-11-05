@@ -6,11 +6,11 @@ All numbers below are rendered from the statistics files of the public repositor
 # S1. Study 1 analyses before the audit (E1–E12)
 All analyses in this section are exploratory. The cross-semester analyses use the training semester's 75th percentile of y as threshold; pooled cross-validation uses the pooled 75th percentile ({{S.s1_thr}}).
 
-The expert rule base FR1–FR5 reads four unit-level shares: v, the share of writing requests not followed by an editing or verification turn; u, the share of turns in runs of three or more assignment-specific questions; p, the share of provide-context turns; and e, the share of verification turns. Its consequents are fixed by the author (FR1: v HIGH → risk 1.0; FR4: v LOW and e HIGH → risk 0.0; and so on). It ranks units at chance in pooled five-fold cross-validation (AUC {{S.f_auc}}; {{S.c_auc}} for a crisp version) and across semesters ({{S.ex_p}} and {{S.ex_r}}). As a Łukasiewicz constraint on a Transformer it leaves AUC unchanged (Δ = {{S.imp_d}}, Holm-adjusted p = {{S.imp_p}}). Its main antecedent appears to have the wrong sign in pooled data: v is inversely associated with y (ρ = {{S.v_rho}}, 95% CI {{S.v_lo}} to {{S.v_hi}}). Learning the consequents on the same shares does not help ({{S.oc_auc}}). With log counts of writing requests (W), conceptual questions (C) and provide-context turns (P) and learned consequents, CF-TSK trained on Fall 2024 reaches {{S.cf_p}} on Spring 2025 (98.75% CI {{S.cfci_p.lo}} to {{S.cfci_p.hi}}) against {{S.lr8_p}} for a regression on all eight broad counts, and {{S.cf_r}} in the reverse direction. Moving the input selection inside the training semester gives {{S.nest_p}} and {{S.nest_r}}. In pooled cross-validation an LSTM is the most accurate encoder ({{S.lstm_m}} ± {{S.lstm_sd}} over ten seeds, against {{S.lr_m}} ± {{S.lr_sd}} for the regression and {{S.tf_m}} ± {{S.tf_sd}} for a Transformer); across semesters it reaches {{S.lstmx_p}} and {{S.lstmx_r}}.
+The author-specified rule base FR1–FR5 reads four unit-level shares: v, the share of writing requests not followed by an editing or verification turn; u, the share of turns in runs of three or more assignment-specific questions; p, the share of provide-context turns; and e, the share of verification turns. Its consequents are fixed by the author (FR1: v HIGH → risk 1.0; FR4: v LOW and e HIGH → risk 0.0; and so on). It ranks units at chance in pooled five-fold cross-validation (AUC {{S.f_auc}}; {{S.c_auc}} for a crisp version) and across semesters ({{S.ex_p}} and {{S.ex_r}}). As a Łukasiewicz constraint on a Transformer it leaves AUC unchanged (Δ = {{S.imp_d}}, Holm-adjusted p = {{S.imp_p}}). Its main antecedent appears to have the wrong sign in pooled data: v is inversely associated with y (ρ = {{S.v_rho}}, 95% CI {{S.v_lo}} to {{S.v_hi}}). Learning the consequents on the same shares does not help ({{S.oc_auc}}). With log counts of writing requests (W), conceptual questions (C) and provide-context turns (P) and learned consequents, CF-TSK trained on Fall 2024 reaches {{S.cf_p}} on Spring 2025 (98.75% CI {{S.cfci_p.lo}} to {{S.cfci_p.hi}}) against {{S.lr8_p}} for a regression on all eight broad counts, and {{S.cf_r}} in the reverse direction. Moving the input selection inside the training semester gives {{S.nest_p}} and {{S.nest_r}}. In pooled cross-validation an LSTM is the most accurate encoder ({{S.lstm_m}} ± {{S.lstm_sd}} over ten seeds, against {{S.lr_m}} ± {{S.lr_sd}} for the regression and {{S.tf_m}} ± {{S.tf_sd}} for a Transformer); across semesters it reaches {{S.lstmx_p}} and {{S.lstmx_r}}.
 
 !TABLE
 Model | Inputs | Consequents | Fall → Spring AUC | Spring → Fall AUC
-Expert rules FR1–FR5 | Shares v, u, p, e | Author-set | {{S.ex_p}} | {{S.ex_r}}
+Author-specified rules FR1–FR5 | Shares v, u, p, e | Author-set | {{S.ex_p}} | {{S.ex_r}}
 EC-TSK | Log counts W, C, P | Author-set directions | {{S.ec_p.e}} | {{S.ec_r.e}}
 CF-TSK (E10) | Log counts W, C, P | Learned | {{S.cf_p}} | {{S.cf_r}}
 CF-TSK, nested selection (E11) | Three counts chosen in training semester | Learned | {{S.nest_p}} | {{S.nest_r}}
@@ -23,7 +23,7 @@ EBM (E11 inputs) | Nested-selection counts | — | {{S.cmp.primary.ebm}} | {{S.c
 LSTM (10 seeds, E12) | Turn sequence | — | {{S.lstmx_p}} | {{S.lstmx_r}}
 Assessment group only | One-hot group | — | {{S.grp_p.e}} | {{S.grp_r.e}}
 !END
-!CAP Table S1. Study 1, all cross-semester models. EC-TSK uses consequents z = (1[W HIGH] + 1[C LOW] + 1[P HIGH])/3 taken from the expert rules' directions.
+!CAP Table S1. Study 1, all cross-semester models. EC-TSK uses consequents z = (1[W HIGH] + 1[C LOW] + 1[P HIGH])/3 taken from the author-specified rules' directions.
 
 On counts, author-set directions rank units below chance ({{S.ec_p.e}}, CI {{S.ec_p.lo}} to {{S.ec_p.hi}}), and learning the consequents raises AUC by {{S.cfec_p.e}} (CI {{S.cfec_p.lo}} to {{S.cfec_p.hi}}). Adjusting for the preceding unaided exam, CF-TSK keeps a positive coefficient from Fall to Spring ({{S.prior_p.b}}, CI {{S.prior_p.lo}} to {{S.prior_p.hi}}) but not in the reverse direction ({{S.prior_r.b}}, CI {{S.prior_r.lo}} to {{S.prior_r.hi}}). Replacing up to 40% of dialogue-act labels at random leaves the frozen rule base's AUC between {{S.noise_lo}} and {{S.noise_hi}}. The effect of rule constraints on neural encoders is negligible: the interval of the AUC difference lies within ±0.01 for the LSTM in both directions and for the Transformer from Fall to Spring ({{S.con.primary.transformer.d}}, CI {{S.con.primary.transformer.lo}} to {{S.con.primary.transformer.hi}}).
 
@@ -36,7 +36,7 @@ One step of the audit had to be corrected. A first attempt to remove group effec
 # S2. Register of analyses
 !TABLE
 Analysis | Question | Plan committed (UTC) | Result committed | Plan on public host before the run
-E1–E6 | Expert rules as score and constraint; direction check | Rules in code | 4 Nov 06:07 (202374a) | No
+E1–E6 | Author-specified rules as score and constraint; direction check | Rules in code | 4 Nov 06:07 (202374a) | No
 E7–E9 | Outcome-checked rules, learned consequents | 4 Nov 06:11 (41a1252) | 06:37 (1c050ea) | No
 E10 | CF-TSK, cross-semester | 06:42 (9c24f9e) | 06:51 (b03064c) | No
 E11 | E10 with selection inside training semester | 07:09 (46be22b) | 07:11 (d026b38) | No
@@ -93,3 +93,32 @@ Split | α | Rule (LOW/HIGH per input) | Support | z (α = 1) | z (α = N/10) | 
 
 **Output monotonicity per input (R3-F).** Share of test cases (%) where a small increase of the input moves the SC-TSK output against its selected direction: {% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}}: {% for i, v in S.r3[sp].mono.per.items() %}{{i}} {{v}}{% if not loop.last %}, {% endif %}{% endfor %}{% if not loop.last %}; {% endif %}{% endfor %}. SM-TSK: 0 in every case.
 
+
+# S5. Revision analyses R4 in detail
+All analyses in this section follow plan PREREG_R4.md and are exploratory. Check 2 gaps are AUC differences with 95% student-cluster intervals; for structure the gap is the AUC of structure plus the model minus that of structure alone.
+
+!TABLE
+Split | Model | AUC | Gap vs structure | Gap vs persistence | Gap vs propensity
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{% for m, lab in [('sc_gaps','SC-TSK'),('sm_gaps','SM-TSK'),('scw','SCw-TSK'),('tsk3','TSK, 3 terms'),('mono_gbm','Monotone GBM'),('no_turns','SC-TSK, no earlier turns'),('bagged','SC-TSK, bagged')] %}{% if S.r4[sp][m] is defined %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{lab}} | {{S.r4[sp][m].auc.e}} | {{S.r4[sp][m].structure.e}} [{{S.r4[sp][m].structure.lo}}, {{S.r4[sp][m].structure.hi}}] | {{S.r4[sp][m].persistence.e}} [{{S.r4[sp][m].persistence.lo}}, {{S.r4[sp][m].persistence.hi}}] | {{S.r4[sp][m].propensity.e}} [{{S.r4[sp][m].propensity.lo}}, {{S.r4[sp][m].propensity.hi}}]
+{% endif %}{% endfor %}{% endfor %}!END
+!CAP Table S7. Check 2 for every rule-base variant. A gap passes if its lower bound exceeds 0.
+
+**Calibration (R4-D).**
+
+!TABLE
+Split | Base rate, training → test | SC-TSK Brier | SC-TSK ECE | SM-TSK Brier | SM-TSK ECE | Brier of constant training base rate
+{% for sp in ['S2_D1_to_D2','S2_D2_to_D1','S2_D12_to_D3','S3_SW_to_AW_IRW','S3_AW_IRW_to_SW'] %}{{sp[3:].replace('_to_', ' → ').replace('_', ' + ').replace('D12', 'D1+D2')}} | {{S.r4[sp].cal.bt}} → {{S.r4[sp].cal.bte}} | {{S.r4[sp].cal.sc_tsk.brier}} | {{S.r4[sp].cal.sc_tsk.ece}} | {{S.r4[sp].cal.sm_tsk.brier}} | {{S.r4[sp].cal.sm_tsk.ece}} | {{S.r4[sp].cal.sc_tsk.brier_base}}
+{% endfor %}!END
+!CAP Table S8. Calibration on the held-out sets (ECE: 10 equal-width bins).
+
+!FIG figs/figS1_reliability.png | Figure S1. Reliability diagrams of SC-TSK and SM-TSK on the held-out sets; the grey line is the test base rate.
+
+**Unconstrained SC-TSK consequents.** D1 (rows: code growth LOW, HIGH; columns: insertions/duration LL, LH, HL, HH): {{S.ta.z[0:4]|join(', ')}}; {{S.ta.z[4:8]|join(', ')}}. SW (rows: earlier production share LOW, HIGH; columns: reply length/earlier turns LL, LH, HL, HH): {{S.r1.z[0:4]|join(', ')}}; {{S.r1.z[4:8]|join(', ')}}. Supports at firing degree ≥ 0.5 are as in Figures 3b and 4b.
+
+**Mixed simulation (R4-E).** Percentages of 100 replications per condition.
+
+!TABLE
+Confound | β | Requests | Naive | Check 1 | Check 2: structure | Check 2: persistence | Check 2: propensity | All checks
+{% for k, o in S.syn4.items() %}{{ {'A':'Structure','B':'Propensity','C':'Persistence'}[o.confound] }} | {{o.beta}} | {{o.requests}} | {{o.naive}} | {{o.check1}} | {{o.check2_structure}} | {{o.check2_persistence}} | {{o.check2_propensity}} | {{o.all_checks}}
+{% endfor %}!END
+!CAP Table S9. Simulation with a within-student effect β added to each confound. A noise input passes the split-half filter in {{S.syn4_noise_split}}% and the within-student filter in {{S.syn4_noise_within}}% of replications.

@@ -9,7 +9,7 @@ Code, time-stamped analysis plans and statistics files for the manuscript *Check
 - v1.0.0 (`10.5281/zenodo.23940474`): earlier draft on StudyChat only. Its behavioural conclusions are withdrawn.
 - v1.1.0 (`10.5281/zenodo.23941973`): audit of Study 1 (R1–R1c) and Study 2 on TutorTrace.
 - v1.2.0 (`10.5281/zenodo.23969402`): Study 3 on RECIPE4U and revision R2 after an internal review.
-- v1.3.0: revision R3 after a second internal review (`PREREG_R3.md`, `study2/run_r3.py` → `results/r3_stats.json`, `results/r3_synthetic.json`): conditional logistic within-student checks, sign-check stability over 200 splits, alternative structure partition, noisy lagged labels, support-scaled prior, output monotonicity, and a simulation with a known generating process. Manuscript, supplementary material and response letter in `manuscript_A/`. All versions: `10.5281/zenodo.23940473`.
+- v1.3.0: revision R3 after a second internal review (`PREREG_R3.md`, `study2/run_r3.py` → `results/r3_stats.json`, `results/r3_synthetic.json`): conditional logistic within-student checks, sign-check stability over 200 splits, alternative structure partition, noisy lagged labels, support-scaled prior, output monotonicity, and a simulation with a known generating process; revision R4 after a third internal review (`PREREG_R4.md`, `study2/run_r4.py` → `results/r4_stats.json`, `results/r4_synthetic.json`): check-by-check verdicts, SCw-TSK, three-term TSK, monotone boosting, calibration and mixed-confound simulation. Manuscript, supplementary material and response letter in `manuscript_A/`. All versions: `10.5281/zenodo.23940473`.
 
 ## What the audit found
 

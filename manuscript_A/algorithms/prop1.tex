@@ -1,0 +1,18 @@
+\input{eqcommon}
+\newtheorem{proposition}{Proposition}
+\begin{document}
+\begin{minipage}{15.4cm}
+\begin{proposition}
+Consider system (1) with complementary memberships $\mu_i^L = 1 - \mu_i^H$, each $\mu_i^H$ non-decreasing, and the full product grid. Then $\sum_j w_j(\mathbf{x}) = 1$ for every $\mathbf{x}$. If the consequents satisfy $d_i\,(z_r - z_j) \ge 0$ for every pair of rules $(j, r)$ that differ only in input $i$, then $d_i\, s(\mathbf{x})$ is non-decreasing in $x_i$.
+\end{proposition}
+\begin{proof}
+$\sum_j w_j(\mathbf{x}) = \prod_i \big(\mu_i^L(x_i) + \mu_i^H(x_i)\big) = 1$, so $s(\mathbf{x}) = \big(\sum_j w_j(\mathbf{x}) z_j + w_0 z_0\big)/(1 + w_0)$. Group the rules into pairs $(j, r)$ that differ only in input $i$, with LOW in rule $j$ and HIGH in rule $r$, and let $m_{jr}(\mathbf{x}) \ge 0$ be the product of the memberships of the other inputs. Then
+\[
+\textstyle\sum_j w_j z_j = \sum_{(j,r)} m_{jr}\,\big(z_j + \mu_i^H(x_i)\,(z_r - z_j)\big),
+\qquad
+\frac{\partial}{\partial \mu_i^H}\textstyle\sum_j w_j z_j = \sum_{(j,r)} m_{jr}\,(z_r - z_j).
+\]
+With $d_i (z_r - z_j) \ge 0$, $d_i$ times this derivative is non-negative, and $\mu_i^H$ is non-decreasing in $x_i$. The signed log transform of the inputs is increasing and does not change the conclusion.
+\end{proof}
+\end{minipage}
+\end{document}
