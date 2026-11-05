@@ -24,7 +24,7 @@ We met the problem in our own work. An earlier draft of this paper, built on the
 
 The contributions are as follows.
 
-- A three-check audit for fuzzy rule models of interaction data (Section 3), integrated into rule construction rather than applied around it: inputs enter the rule base only if their sign survives within-sample checks, consequents can be constrained to respect that sign, and every model is reported against structure, persistence and propensity baselines and under cross-cohort transfer. The individual ingredients are standard; what is new is their combination for rule models whose text can disguise a shortcut, together with interpretability measures (rule support, monotonicity violations) that make the disguise visible.
+- A three-check audit for fuzzy rule models of interaction data (Section 3), integrated into rule construction rather than applied around it: inputs enter the rule base only if their sign survives within-sample checks, consequents can be constrained to respect that sign, and every model is reported against structure, persistence and propensity baselines and under cross-cohort transfer. The procedure and the two constrained constructions are stated as Algorithms 1–3. The individual ingredients are standard; what is new is their combination for rule models whose text can disguise a shortcut, together with interpretability measures (rule support, monotonicity violations) that make the disguise visible.
 - Study 1 (StudyChat): the "assisted minus unaided" proxy for offloading risk is dominated by assessment structure, the apparent sign reversal of an expert rule is a between-group effect, and a learned rule base that passed a planned cross-semester test carries little within-group signal.
 - Study 2 (TutorTrace): a sign-checked TSK classifier for answer-seeking queries transfers across deployments and to a new task. Its inputs keep their sign within students, and on the new task it beats label persistence and student propensity by about 0.2 AUC. It does not clearly exceed session structure on the original task, and it trails a regression on all behavioural features.
 - Study 3 (RECIPE4U): the same classifier for production requests transfers across writing courses and beats structure, but most of its signal is persistence of the student's own earlier requests. A one-line rule nearly matches it, and without the lagged-label input it falls to {{S.q.S3_SW_to_AW_IRW.nolag.e}}.
@@ -49,7 +49,7 @@ Geirhos et al. [20] describe shortcut learning as solving a benchmark through cu
 
 # 3. The audit and the rule models
 ## 3.1 Three checks
-Figure 1 summarises the audit. It applies to any rule model whose antecedents are computed from interaction data and whose label may be correlated with structure in that data.
+Figure 1 summarises the audit and Algorithm 1 states it step by step. It applies to any rule model whose antecedents are computed from interaction data and whose label may be correlated with structure in that data.
 
 !FIG figs/fig1_audit.png | Figure 1. The three-check audit and its outcome in Studies 1–3 (S1–S3).
 
@@ -58,6 +58,36 @@ Figure 1 summarises the audit. It applies to any rule model whose antecedents ar
 **Check 2: trivial baselines.** Fit the same protocol with models that use no behaviour: one that sees only structural variables, one that predicts the label of a request from the label of the previous request in the same session (persistence), and one that uses the student's earlier share of positive labels (propensity). A behavioural rule model is informative to the extent that it improves on these, and the improvement is the quantity to report.
 
 **Check 3: transfer under a written plan.** Train on one cohort and score another once, with hypotheses, decision rules and margins fixed in writing before the run.
+
+!CODE
+Algorithm 1. Audit of a rule model f on interaction data
+Input : training cohort D_tr, test cohort D_te; label y; behavioural inputs X;
+        structural cells G; student identifier u; written plan P (hypotheses,
+        margins, interval levels)
+Output: within-sample associations, baseline gaps, transfer decisions
+ 1  push P to a public host before f or any baseline touches D_tr or D_te
+    // Check 1: antecedent signs
+ 2  for each input x used by f, with rule direction d_x in {-1, +1} do
+ 3      rho_G(x) <- Spearman correlation of within-cell ranks of x and y
+ 4      rho_u(x) <- Spearman correlation of within-student ranks of x and y
+ 5      interval of each rho: student-cluster bootstrap, B = 2000
+ 6      if the interval excludes 0 with sign d_x then  x is supported
+ 7      else if it excludes 0 with sign -d_x then     x contradicts its rule
+ 8      else                                           x is not supported
+ 9  end for
+    // Check 2: trivial baselines (only b_S has parameters, fitted on D_tr)
+10  b_S <- logistic regression on structural variables
+11  b_M <- 1 if the previous request of the session had y = 1, 0 if not, 0.5 if none
+12  b_P <- the student's share of y = 1 among earlier requests, 0.5 if none
+13  for each b in {b_S, b_M, b_P}: Delta_b <- AUC(f) - AUC(b) on D_te, with interval
+    // Check 3: transfer under P
+14  fit f once on D_tr; score D_te once; decide every hypothesis of P at its
+    Bonferroni-corrected level
+15  return rho_G, rho_u, Delta, decisions
+    // a rule is read as behavioural only if its inputs are supported in
+    // lines 6-8 and the lower bounds of Delta in line 13 exceed 0
+!END
+!CAP Algorithm 1. The audit. Lines 3 and 4 are the two halves of Check 1; in Study 1 the cells are semester × assessment group, in Studies 2 and 3 the student is the cell.
 
 ## 3.2 Analysis plans and what can be verified
 Table 1 lists every analysis with the commit that fixed its plan and the commit that recorded its result. The repository was created on GitHub at 07:34 UTC on 4 November 2026. Plans committed before that time (E7–E12) carry only local commit timestamps; a version containing them and their results was archived on Zenodo at 07:38 UTC. For the revision analyses R1–R1c, plans and results were pushed together at 08:16 UTC, so their order also rests on local timestamps. For Study 2 the plan commit was on GitHub before the result was pushed (08:44 UTC). For Study 3 and R2, GitHub's push log shows the plan on the public host before the analysis ran (Study 3: plan pushed at 09:15:48 UTC, results at 09:27:34 UTC; R2: plan pushed at 03:21 UTC on 5 November). We therefore call these time-stamped analysis plans rather than registrations. E1–E6 were run with decision rules written into the analysis code before the run but without a separate plan. Study 3's plan copied Study 2's after Study 2's results were known, including the non-inferiority margin, the three-input grid and the sign check.
@@ -91,7 +121,49 @@ The **learned rule bases** fit the consequents. Because s is linear in z once th
 
 with A_ij = w_ij / (Σ_k w_ik + w_0), b_i = w_0 z_0 / (Σ_k w_ik + w_0), π the training base rate and α = 1. Each z_j is close to the proportion of positive cases among units that strongly match rule j, pulled toward the base rate when few units match it. In Study 1 the inputs are log counts of dialogue acts (CF-TSK).
 
-**SC-TSK** (Studies 2 and 3) adds Check 1 to construction. Candidate behavioural inputs are ranked by |AUC − 0.5| on the training data; an input is eligible only if its direction (AUC above or below 0.5) is the same in two halves of the training students. The top three eligible inputs form the grid. **SM-TSK**, added in revision, also makes the consequents respect those directions: for every pair of rules that differ only in input i, with selected direction d_i ∈ {−1, +1}, the constraint d_i (z_HIGH − z_LOW) ≥ 0 is added to the programme above. The constraints are linear, so the problem remains a small quadratic programme (eight variables, twelve constraints), solved here by SLSQP from the SC-TSK solution. Sensitivity to w_0 ∈ {0.01, 0.05, 0.2} and α ∈ {0.1, 1, 10} is reported in Sections 5–6.
+**SC-TSK** (Studies 2 and 3) adds Check 1 to construction. Candidate behavioural inputs are ranked by |AUC − 0.5| on the training data; an input is eligible only if its direction (AUC above or below 0.5) is the same in two halves of the training students. The top three eligible inputs form the grid (Algorithm 2). **SM-TSK**, added in revision, also makes the consequents respect those directions: for every pair of rules that differ only in input i, with selected direction d_i ∈ {−1, +1}, the constraint d_i (z_HIGH − z_LOW) ≥ 0 is added to the programme above. The constraints are linear, so the problem remains a small quadratic programme (eight variables, twelve constraints), solved here by SLSQP from the SC-TSK solution. Sensitivity to w_0 ∈ {0.01, 0.05, 0.2} and α ∈ {0.1, 1, 10} is reported in Sections 5–6.
+
+!CODE
+Algorithm 2. SC-TSK: sign-checked construction of a zero-order TSK rule base
+Input : training requests (x_n, y_n, u_n), n = 1..N; candidate inputs c_1..c_m;
+        k = 3; w_0 = 0.05; z_0 = 0.5; alpha = 1; seed 0
+Output: selected inputs S, directions d, memberships, consequents z
+ 1  x <- sign(x) * log(1 + |x|) for every candidate
+ 2  split the training students at random into halves H_1, H_2
+ 3  for each candidate c with at least two distinct values do
+ 4      a_c <- AUC(c, y);  a_c1, a_c2 <- AUC on H_1, H_2 (0.5 if a half has one class)
+ 5      eligible(c) <- sign(a_c1 - 0.5) = sign(a_c2 - 0.5) and a_c1 != 0.5
+ 6      d_c <- sign(a_c - 0.5)
+ 7  end for
+ 8  S <- the k eligible candidates with the largest |a_c - 0.5|
+ 9  for each i in S do
+10      q_i, Q_i <- 25th and 75th training percentiles; if Q_i - q_i < 1e-9 then Q_i <- q_i + 1e-3
+11      HIGH_i(x) <- clip((x - q_i) / (Q_i - q_i), 0, 1);  LOW_i(x) <- 1 - HIGH_i(x)
+12  end for
+13  rules R_1..R_8: every LOW/HIGH combination over S; w_j(x) <- product of its memberships
+14  A_nj <- w_j(x_n) / (sum_l w_l(x_n) + w_0);  b_n <- w_0 z_0 / (sum_l w_l(x_n) + w_0)
+15  z <- argmin over [0,1]^8 of ||A z + b - y||^2 + alpha ||z - pi||^2   (bounded least squares)
+16  return S, d, (q, Q), z;  score s(x) = (sum_j w_j(x) z_j + w_0 z_0) / (sum_j w_j(x) + w_0)
+!END
+!CAP Algorithm 2. SC-TSK. Line 5 is Check 1 inside construction; π is the training base rate.
+
+!CODE
+Algorithm 3. SM-TSK: monotone consequents
+Input : A, b, y, pi, alpha from Algorithm 2; directions d_i, i in S; SC-TSK solution z^0
+Output: consequents z that respect d
+ 1  C <- empty set
+ 2  for each i in S and each rule j whose term on input i is LOW do
+ 3      k <- the rule equal to j except HIGH on input i
+ 4      add the constraint d_i (z_k - z_j) >= 0 to C        // |C| = 3 x 4 = 12
+ 5  end for
+ 6  z <- argmin over [0,1]^8 of ||A z + b - y||^2 + alpha ||z - pi||^2 subject to C
+         (SLSQP started at clip(z^0, 0, 1); at most 500 iterations; tolerance 1e-10)
+ 7  violations(z) <- number of (j, k, d_i) in C with d_i (z_k - z_j) < -1e-6
+ 8  return z
+!END
+!CAP Algorithm 3. SM-TSK. Line 7, applied to z^0, gives the sign violations of SC-TSK in Table 5.
+
+Algorithm 2 costs O(m N log N) for the AUCs and a bounded least-squares problem in eight variables; Algorithm 3 adds twelve linear constraints to the same problem. On synthetic data of the size used here (600 requests, nine candidates) Algorithm 2 took at most 0.07 s and Algorithm 3 at most 0.05 s over 20 repetitions, so the two checks add no practical cost to building a rule base.
 
 For rule injection into neural encoders (Study 1 only) we read rule j as "if the antecedent holds, risk is about z_j" and penalise violations of the Łukasiewicz bounds w_j z_j ≤ r ≤ 1 − w_j(1 − z_j) with a hinge loss. A rule that fires fully pins r to z_j; when several rules fire fully with different consequents the bounds conflict, and the loss settles where the summed violation is smallest. Every encoder is also trained with binary cross-entropy, so the constraint is never satisfied exactly.
 
