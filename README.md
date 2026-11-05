@@ -1,22 +1,29 @@
-# Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues
+# Check the premises before imposing the rules: an audit of fuzzy rule models on three student–AI interaction datasets
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23940473.svg)](https://doi.org/10.5281/zenodo.23940473)
 
-Code accompanying the manuscript *Expert versus Data-Learned Fuzzy Rules for Cognitive-Offloading Risk in Student–LLM Tutoring Dialogues: A Cross-Semester Evaluation* (H. B. Truong, submitted to *Applied Soft Computing*).
+Code, time-stamped analysis plans and statistics files for the manuscript *Check the Premises Before Imposing the Rules: An Audit of Fuzzy Rule Models on Three Student–AI Interaction Datasets* (H. B. Truong, submitted to *Applied Soft Computing*). The manuscript is rendered from the statistics files by `manuscript_A/fill_A.py`; no number in it is typed by hand. No third-party data are redistributed.
 
-The study compares an expert five-rule Takagi–Sugeno–Kang (TSK) rule base, used as a standalone score and as a Łukasiewicz implication constraint on sequence encoders, with CF-TSK, an eight-rule grid over dialogue-act volumes whose consequents are learned on training data. CF-TSK is tested across the two StudyChat semesters under analysis plans committed before each run (`PREREG_*.md`; the commit order is in `git-history.bundle` or the repository history). `results/frozen_cf_tsk_f24.json` holds the Fall 2024 model for scoring new cohorts without refitting.
+## Versions
 
-## Status (4 November 2026): audit result and pause
+- v1.0.0 (`10.5281/zenodo.23940474`): earlier draft on StudyChat only. Its behavioural conclusions are withdrawn.
+- v1.1.0 (`10.5281/zenodo.23941973`): audit of Study 1 (R1–R1c) and Study 2 on TutorTrace.
+- v1.2.0: Study 3 on RECIPE4U and revision R2 after an internal review. All versions: `10.5281/zenodo.23940473`.
 
-Archived versions: v1.0.0 `10.5281/zenodo.23940474` (original claims), v1.1.0 `10.5281/zenodo.23941973` (audit and Study 2); all versions `10.5281/zenodo.23940473`.
+## What the audit found
 
-A pre-submission review (analysis plans `PREREG_R1.md`, `PREREG_R1b.md`, `PREREG_R1c.md`, each committed before its run; scripts `run_revision.py`, `run_revision_b.py`, `run_within.py`, `run_constraint_ci.py`) found that the weak label is dominated by assessment-group structure:
+The audit has three checks: antecedent signs within structural cells and within students; trivial baselines (structure, label persistence, student propensity); and cross-cohort transfer under a written plan.
 
-- a model that knows only the assessment group reaches AUC 0.699 (Fall 2024 → Spring 2025), 0.780 (reverse) and 0.730 in pooled CV, above every behavioural model, including CF-TSK (0.663 / 0.642);
-- within assessment groups, no behavioural input (shares or volumes) is associated with the gap (all 95% intervals contain 0), so the sign reversal of the expert rule FR1 is a between-group effect;
-- held-out predictions carry at most weak within-group signal (ρ = 0.02–0.14).
+- **Study 1, StudyChat** (`src/`). A model that knows only the assessment group (AUC 0.699 / 0.780) outranks every behavioural model, including the count-based TSK rule base CF-TSK (0.663 / 0.642). No within-group association larger than about 0.16 can be detected (equivalence test, SESOI 0.1).
+- **Study 2, TutorTrace** (`study2/`). A sign-checked eight-rule TSK classifier for dependent queries transfers across deployments (0.642 / 0.644 / 0.684). Its inputs keep their sign within students. On the new task it beats label persistence by 0.202 AUC, but it trails regression on all features.
+- **Study 3, RECIPE4U** (`study3/`). The same classifier for production requests beats course structure, including within-course cross-validation. The one-line rule "the previous request asked for production" comes within 0.032, so the rule base mainly describes persistence.
+- **Monotone consequents (SM-TSK).** These remove all sign violations at a cost of 0.01 AUC or less in four of five splits.
 
-The behavioural conclusions of version 1.0.0 (E10–E12) are therefore not supported, and the manuscript has been withdrawn from submission. Study 2 (TutorTrace, `study2/`) and Study 3 (RECIPE4U, `study3/`) apply the same pre-registered protocol to request-level targets; manuscript A (`manuscript_A/`, rendered by `fill_A.py`) reports all three studies. `PREREG_S2_protocol.md` describes the redesigned study (within-cell continuous outcome, sign-checked TSK regression, confirmation on a new cohort). Results files: `results/revision_stats.json`, `results/revision_b_stats.json`, `results/within_stats.json`, `results/constraint_ci.json`.
+## Analysis plans
+
+Each `PREREG_*.md` file (and `study2/PREREG_S2_tutortrace.md`, `study3/PREREG_S3_recipe4u.md`) was committed before its run. Section 3.2 and Table 1 of the manuscript state for which plans GitHub's push log shows the plan on the public host before the run: Study 3 and R2 (`PREREG_R2.md`, pushed 03:21 UTC on 5 November 2026). For the others the order rests on local commit timestamps. These are time-stamped analysis plans, not registrations with a third party.
+
+R2 code: `study2/run_r2.py` → `results/r2_stats.json`, `results/r2_log.txt`. Descriptive group means: `src/group_means.py` → `results/group_means.json`.
 
 ## Layout
 

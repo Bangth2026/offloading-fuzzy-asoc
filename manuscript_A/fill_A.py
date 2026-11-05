@@ -51,6 +51,8 @@ def context(repo_url, doi):
     for s_ in ("f24", "s25"):
         for g in ("g1", "g2", "g3"):
             S[f"prev_{s_}_{g}"] = f2(P[f"{s_}_{g}"]["rate"])
+    GM = json.load(open(os.path.join(ROOT, "results/group_means.json")))
+    S["gm"] = {g: {k: f3(v) if k != "writing" else f"{v:.1f}" for k, v in GM[g].items() if k != "n"} for g in GM}
     S["zero_f24_g2"] = f"{100 * cells['f24_g2']['zero_share']:.0f}"
     S["grp_p"], S["grp_r"] = ci(R1["R1B"]["primary"]["group_only"]), ci(R1["R1B"]["reverse"]["group_only"])
     S["grp_cv"] = f3(st["R1b"]["group_only_pooled_cv"])
@@ -81,6 +83,39 @@ def context(repo_url, doi):
         S[f"t{tag}"]["dec"] = o["decisions"]; S[f"t{tag}"]["sel"] = o["selected"]
         S[f"t{tag}"]["base"] = f2(o["train_dependent_rate"]); S[f"t{tag}"]["ntest"] = o["n_test"]
         S[f"t{tag}"]["z"] = [f2(c["z"]) for c in o["consequents"]]
+    r2 = json.load(open(os.path.join(ROOT, "results/r2_stats.json")))
+    Q = {}
+    for st_, keys in (("S2", ("D1_to_D2", "D2_to_D1", "D12_to_D3")), ("S3", ("SW_to_AW_IRW", "AW_IRW_to_SW"))):
+        for k in keys:
+            o = r2[st_][k]; q = {}
+            for m in ("auc_sc", "auc_sm", "sm_minus_sc", "auc_markov", "sc_minus_markov", "auc_propensity", "sc_minus_propensity"):
+                q[m] = ci(o[m])
+            q["viol_sc"], q["viol_sm"] = o["viol_sc"], o["viol_sm"]
+            q["lowsup"] = sum(1 for n in o["cell_support"] if n < 10)
+            q["pos_train"], q["n_train"], q["pos_test"], q["n_test"] = o["pos_train"], o["n_train"], o["pos_test"], o["n_test"]
+            q["ws"] = {s: {"tr": f3(v["train"]["rho"]), "trlo": f3(v["train"]["ci"][0]), "trhi": f3(v["train"]["ci"][1]),
+                           "te": f3(v["test"]["rho"]), "telo": f3(v["test"]["ci"][0]), "tehi": f3(v["test"]["ci"][1])}
+                       for s, v in o["within_student"].items()}
+            q["ws_score"] = {"r": f3(o["within_student_sc_score"]["rho"]), "lo": f3(o["within_student_sc_score"]["ci"][0]),
+                             "hi": f3(o["within_student_sc_score"]["ci"][1])}
+            q["maxov"] = f2(max(abs(v) for s in o["overlap"].values() for v in s.values()))
+            q["dup"] = o["duplicates"]
+            if "H2_without_duplicates" in o:
+                q["h2nd"] = ci(o["H2_without_duplicates"]["gain"]); q["h2nd_sel"] = o["H2_without_duplicates"]["selected"]
+            sv = list(o["sensitivity"].values()); q["sens_lo"], q["sens_hi"] = f3(min(sv)), f3(max(sv))
+            if st_ == "S3":
+                q["restr"] = ci(o["auc_structure_restricted"]); q["restr_gain"] = ci(o["gain_over_restricted"])
+                q["nolag"] = ci(o["without_lagged_label"]["auc"]); q["nolag_sel"] = o["without_lagged_label"]["selected"]
+            Q[f"{st_}_{k}"] = q
+    S["q"] = Q
+    S["wc"] = {c: {"n": v["n"], "pos": v["pos"], "st": ci(v["structure"]), "sc": ci(v["sc_tsk"]), "both": ci(v["structure_plus_sc"]),
+                   "gain": ci(v["gain"])} for c, v in r2["S3"]["within_course_cv"].items()}
+    EQ = r2["S1"]["equivalence_sesoi_0.1"]
+    S["eq"] = {k: {"r": f3(v["rho"]), "lo": f3(v["ci90"][0]), "hi": f3(v["ci90"][1])} for k, v in EQ.items()}
+    S["eq_maxbound"] = f2(max(max(abs(v["ci90"][0]), abs(v["ci90"][1])) for v in EQ.values()))
+    S["eq_none"] = not any(v["equivalent"] for v in EQ.values())
+    S["s1cells"] = r2["S1"]["cell_counts"]; S["s1_zero_share"] = f"{100 * r2['S1']['share_zero_overall']:.0f}"
+    S["s1_thr"] = f3(r2["S1"]["pooled_threshold"]); S["padded"] = r2["padded_selections"]
     s3 = json.load(open(os.path.join(ROOT, "study3/results_s3.json")))
     S["rc"] = s3["counts"]
     S["rc_fmt"] = {c: {"n": v["requests"], "s": v["students"], "p": f2(v["production_rate"])} for c, v in s3["counts"].items()}
@@ -102,7 +137,7 @@ def main():
     S = context(a.repo_url, a.doi)
     env = Environment(undefined=StrictUndefined, keep_trailing_newline=True)
     out = os.path.join(HERE, "build"); os.makedirs(out, exist_ok=True)
-    for name in [n for n in ("manuscript_A", "cover_letter_A") if os.path.exists(os.path.join(HERE, f"{n}.txt"))]:
+    for name in [n for n in ("manuscript_A", "cover_letter_A", "response_A") if os.path.exists(os.path.join(HERE, f"{n}.txt"))]:
         txt = env.from_string(open(os.path.join(HERE, f"{name}.txt"), encoding="utf8").read()).render(S=S)
         for bad in ("[TBD", "{{", "{%", "[CẦN"):
             if bad in txt:

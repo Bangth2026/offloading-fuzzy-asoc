@@ -40,3 +40,6 @@ node_modules/
 data/
 
 manuscript_A/build/
+!results/r2_stats.json
+!results/r2_log.txt
+!results/group_means.json

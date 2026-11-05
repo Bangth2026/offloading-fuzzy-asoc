@@ -8,6 +8,7 @@ from matplotlib.patches import FancyBboxPatch
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, "..")
 st = json.load(open(os.path.join(ROOT, "results/paper_stats_fuzzy.json")))
 s2 = json.load(open(os.path.join(ROOT, "study2/results_s2.json")))
+r2 = json.load(open(os.path.join(ROOT, "results/r2_stats.json")))
 BLUE, ORANGE, INK, MUTED, GRID = "#2a78d6", "#eb6834", "#1f2328", "#5b636e", "#d9dde3"
 plt.rcParams.update({"font.size": 9, "axes.edgecolor": MUTED, "xtick.color": MUTED, "ytick.color": INK})
 OUT = os.path.join(HERE, "figs")
@@ -19,20 +20,20 @@ def clean(a):
 
 
 # ---------------------------------------------------------------- Figure 1: audit protocol
-fig, ax = plt.subplots(figsize=(10, 2.9)); ax.axis("off"); ax.set_xlim(0, 10); ax.set_ylim(0, 3)
+fig, ax = plt.subplots(figsize=(10, 3.1)); ax.axis("off"); ax.set_xlim(0, 10); ax.set_ylim(-0.1, 3)
 boxes = [(0.1, "Rule model\n(expert or learned TSK)", "#eef3fb"),
-         (2.55, "Check 1\nSign of each antecedent\nwithin structural cells", "#fff4ec"),
-         (5.0, "Check 2\nStructure-only baseline\n(group, position, progress)", "#fff4ec"),
+         (2.55, "Check 1\nSign of each antecedent\nwithin cells and students", "#fff4ec"),
+         (5.0, "Check 2\nTrivial baselines: structure,\npersistence, propensity", "#fff4ec"),
          (7.45, "Check 3\nTransfer across cohorts\nunder a committed plan", "#fff4ec")]
 for x, t, c in boxes:
     ax.add_patch(FancyBboxPatch((x, 1.0), 2.25, 1.35, boxstyle="round,pad=0.04", fc=c, ec=MUTED, lw=1))
     ax.text(x + 1.125, 1.675, t, ha="center", va="center", fontsize=9, color=INK)
 for x in (2.35, 4.8, 7.25):
     ax.annotate("", xy=(x + 0.2, 1.675), xytext=(x, 1.675), arrowprops=dict(arrowstyle="->", color=MUTED, lw=1.4))
-notes = [(3.675, "StudyChat: the FR1 sign vanishes\nwithin groups"), (6.125, "beats every behavioural\nmodel in StudyChat"),
-         (8.575, "TutorTrace, RECIPE4U: hold\nStudyChat: fails within groups")]
+notes = [(3.675, "S1: FR1 sign vanishes within groups\nS2: signs hold within students\nS3: lagged-label input holds"), (6.125, "S1: structure beats all models\nS2: rules beat persistence on D3\nS3: persistence matches rules"),
+         (8.575, "S1: transfers via structure\nS2, S3: transfer holds")]
 for x, t in notes:
-    ax.text(x, 0.55, t, ha="center", va="center", fontsize=8, color=MUTED, style="italic")
+    ax.text(x, 0.42, t, ha="center", va="center", fontsize=7.5, color=MUTED, style="italic")
 plt.tight_layout(); plt.savefig(os.path.join(OUT, "fig1_audit.png"), dpi=300, bbox_inches="tight"); plt.close()
 
 # ---------------------------------------------------------------- Figure 2: StudyChat audit
@@ -89,11 +90,12 @@ a.axvline(0.5, color=MUTED, ls="--", lw=1); a.set_yticks(range(len(models)), [m[
 a.set_xlabel("AUC, dependent vs guided query (95% CI)"); a.set_xlim(0.45, 0.85); clean(a)
 a.legend(frameon=False, fontsize=8, loc="lower right"); a.set_title("(a) Held-out deployments", loc="left", fontsize=9.5)
 b = ax[1]; o = s2["primary_D1_to_D2"]; sel = o["selected"]; z = [c["z"] for c in o["consequents"]]
+SUP2 = r2["S2"]["D1_to_D2"]["cell_support"]
 M = np.array(z).reshape(2, 4)    # rows: first input LOW/HIGH; cols: (second, third) LL, LH, HL, HH
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
 for r in range(2):
     for c in range(4):
-        b.text(c, r, f"{M[r, c]:.2f}", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=9)
+        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP2[r * 4 + c]})", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=8.5)
 short = {"pre_net_code_growth": "code growth", "pre_chars_inserted": "chars inserted", "pre_duration_s": "pre-query duration"}
 n1, n2, n3 = (short.get(s, s) for s in sel)
 b.set_yticks([0, 1], [f"{n1} LOW", f"{n1} HIGH"])
@@ -117,12 +119,12 @@ for key, lab, col, mk, off in splits3:
 a.axvline(0.5, color=MUTED, ls="--", lw=1); a.set_yticks(range(len(models)), [m[1] for m in models[::-1]])
 a.set_xlabel("AUC, production vs guidance request (95% CI)"); a.set_xlim(0.3, 0.85); clean(a)
 a.legend(frameon=False, fontsize=8, loc="lower left"); a.set_title("(a) Held-out courses", loc="left", fontsize=9.5)
-b = ax[1]; o = s3["primary_SW_to_AW_IRW"]; z = [c["z"] for c in o["consequents"]]
+b = ax[1]; o = s3["primary_SW_to_AW_IRW"]; z = [c["z"] for c in o["consequents"]]; SUP3 = r2["S3"]["SW_to_AW_IRW"]["cell_support"]
 M = np.array(z).reshape(2, 4)
 im = b.imshow(M, cmap="Blues", vmin=0, vmax=1, aspect="auto")
 for r in range(2):
     for c in range(4):
-        b.text(c, r, f"{M[r, c]:.2f}", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=9)
+        b.text(c, r, f"{M[r, c]:.2f}\n(n={SUP3[r * 4 + c]})", ha="center", va="center", color="white" if M[r, c] > 0.6 else INK, fontsize=8.5)
 b.set_yticks([0, 1], ["earlier production\nrequests: none", "earlier production\nrequests: some"])
 b.set_xticks(range(4), ["reply L\nturns L", "reply L\nturns H", "reply H\nturns L", "reply H\nturns H"], fontsize=8)
 b.set_xlabel("reply = mean length of earlier ChatGPT replies, turns = earlier turns in session", fontsize=8, color=MUTED)
