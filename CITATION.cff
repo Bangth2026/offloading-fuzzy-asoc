@@ -1,19 +1,25 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "Expert versus data-learned fuzzy rules for cognitive-offloading risk in student–LLM dialogues"
-version: 1.1.0
+title: "Check the premises before imposing the rules: an audit of fuzzy rule models on three student–AI interaction datasets"
+version: 1.2.0
 doi: 10.5281/zenodo.23940473
 repository-code: "https://github.com/Bangth2026/offloading-fuzzy-asoc"
-date-released: 2026-11-04
+date-released: 2026-11-05
 license: MIT
 authors:
   - family-names: Truong
     given-names: Hai Bang
     orcid: "https://orcid.org/0000-0001-5094-3128"
     affiliation: "Saigon International University, Ho Chi Minh City, Vietnam"
-keywords: [cognitive offloading, Takagi-Sugeno-Kang, learned consequents, neuro-fuzzy, cross-cohort validation, learning analytics]
+keywords: [Takagi-Sugeno-Kang fuzzy rules, interpretability, monotone rule bases, shortcut learning, learning analytics, help-seeking]
 references:
   - type: dataset
     title: "StudyChat"
     authors: [{family-names: McNichols, given-names: Hunter}, {family-names: Ikram, given-names: Fareya}, {family-names: Lan, given-names: Andrew}]
     url: "https://huggingface.co/datasets/wmcnicho/StudyChat"
+  - type: dataset
+    title: "TutorTrace"
+    url: "https://github.com/divadbaroon/TutorTrace_dataset_and_benchmark"
+  - type: dataset
+    title: "RECIPE4U"
+    authors: [{family-names: Han, given-names: Jieun}, {family-names: Yoo, given-names: Haneul}, {family-names: Myung, given-names: Junho}, {family-names: Kim, given-names: Minsun}, {family-names: Lee, given-names: Tak Yeon}, {family-names: Ahn, given-names: So-Yeon}, {family-names: Oh, given-names: Alice}]
