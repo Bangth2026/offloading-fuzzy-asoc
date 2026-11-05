@@ -31,6 +31,8 @@ results/*
 !results/within_stats.json
 !results/within_log.txt
 !results/audit_cells.json
+!results/r2_stats.json
+!results/r2_log.txt
 manuscript/build/
 manuscript/figs/fig4_fuzzy.png
 manuscript/figs/fig5_fuzzy.png

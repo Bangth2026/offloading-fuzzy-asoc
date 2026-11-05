@@ -38,7 +38,10 @@ def build(csv):
                      prev_mean_user_len=float(prev.user_len.mean()) if len(prev) else 0.0,
                      prev_mean_reply_len=float(prev.chatgpt_after_len.mean()) if len(prev) else 0.0,
                      essay_len_prev=float(prev.essay_len.iloc[-1]) if len(prev) else 0.0,
-                     essay_growth_prev=float(prev.essay_len.iloc[-1] - prev.essay_len.iloc[0]) if len(prev) else 0.0)
+                     essay_growth_prev=float(prev.essay_len.iloc[-1] - prev.essay_len.iloc[0]) if len(prev) else 0.0,
+                     # added in R2 (PREREG_R2.md); not used by the Study 3 models
+                     essay_len_start=float(g.essay_len.iloc[0]),
+                     prev_request_production=(float(req_prev.intent_final.iloc[-1] in PRODUCTION) if len(req_prev) else 0.5))
             rows.append(r)
     f = pd.DataFrame(rows)
     f = f[f.intent.isin(PRODUCTION | GUIDANCE)].copy()
